@@ -1,0 +1,7 @@
+# v0：mock 闭环，无 GPU 依赖
+pipeline: v0_mock
+env: mock
+max_steps: 12
+logging:
+  level: INFO
+notes: "scripts/run_smoke_v0.sh 默认使用本配置思路（CLI 参数可覆盖）。"

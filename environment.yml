@@ -1,0 +1,10 @@
+# Conda 环境名真源：仅修改本文件 `name:`，脚本通过 scripts/resolve_conda_env.sh 解析。
+# 创建: conda env create -f environment.yml
+# 更新: conda env update -n <name> -f environment.yml --prune   （name 与本文件一致）
+name: embodied-scene-agent
+channels:
+  - conda-forge
+dependencies:
+  # 与团队现有 conda 环境对齐（本机常用 3.12）；requires-python >=3.10（pyproject.toml）
+  - python=3.12.*
+  - pip

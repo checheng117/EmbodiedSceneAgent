@@ -1,0 +1,31 @@
+{
+  "generated_utc": "2026-03-27T14:22:34.108635+00:00",
+  "paths": [
+    "docs/final_report_assets/report_outline_final.md",
+    "docs/final_report_assets/executive_summary.md",
+    "docs/final_report_assets/abstract_candidates.md",
+    "docs/final_report_assets/appendix_notes.md",
+    "docs/final_report_assets/limitations.md",
+    "docs/final_report_assets/reproducibility.md",
+    "docs/final_report_assets/artifact_index.md",
+    "docs/final_report_assets/one_page_project_brief.md",
+    "docs/final_report_assets/advisor_brief.md",
+    "docs/final_report_assets/interview_brief.md",
+    "docs/final_report_assets/tables/current_main_results_table.md",
+    "docs/final_report_assets/tables/benchmark_coverage_table.md",
+    "docs/final_report_assets/tables/system_status_table.md",
+    "docs/final_report_assets/figures/e2_ablation_summary.md",
+    "docs/final_report_assets/figures/architecture_final.svg",
+    "docs/final_report_assets/figures/scene_memory_schema_diagram.svg",
+    "docs/final_report_assets/figures/planner_verifier_replanner_loop.svg",
+    "docs/final_report_assets/figures/benchmark_scope_map.svg",
+    "docs/final_report_assets/figures/project_roadmap_final.svg",
+    "docs/final_report_assets/figures/hybrid_replanner_status.md",
+    "docs/final_report_assets/case_studies/e2_mock_case.md",
+    "docs/final_report_assets/case_studies/e2_calvin_fixture_case.md",
+    "docs/final_report_assets/case_studies/hybrid_success_case.md",
+    "docs/final_report_assets/case_studies/hybrid_parse_fallback_case.md",
+    "docs/final_report_assets/case_studies/rlbench_bridge_case.md",
+    "results/final_report_assets/unified_headlines.json"
+  ]
+}

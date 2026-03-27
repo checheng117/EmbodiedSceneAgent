@@ -1,0 +1,14 @@
+# 示例：复制到本机任意已在 PYTHONPATH 中的模块，例如 `~/esa_local/calvin_env_local.py`
+# 然后：
+#   export ESA_CALVIN_ENV_FACTORY='calvin_env_local:make_calvin_env'
+#   export PYTHONPATH=~/esa_local:$PYTHONPATH
+#
+# **不要**把含真实 Hydra 路径或机器相关配置的版本提交到 git。
+#
+# 下方代码仅为结构示意；须按你的 calvin_env / CALVIN 安装方式自行填写。
+
+# def make_calvin_env():
+#     """Return a configured PlayTableSimEnv (or compatible) instance."""
+#     from calvin_env.envs.play_table_env import PlayTableSimEnv
+#     # return PlayTableSimEnv(...)  # 使用你本地的 Hydra / 构造函数
+#     raise NotImplementedError("Replace with your real constructor.")

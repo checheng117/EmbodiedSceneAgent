@@ -1,0 +1,150 @@
+{
+  "generated_utc": "2026-03-27T14:21:02.783086+00:00",
+  "smoke_mode_requested": "all",
+  "task": "ReachTarget",
+  "subset_tasks_documented": [
+    "ReachTarget",
+    "OpenDrawer",
+    "CloseDrawer",
+    "PickUpCup"
+  ],
+  "import_ok": false,
+  "import_message": "rlbench not available: No module named 'rlbench'",
+  "task_listing_message": "rlbench not available: No module named 'rlbench'",
+  "task_class_names_sample": [
+    "ReachTarget",
+    "OpenDrawer",
+    "CloseDrawer",
+    "PickUpCup"
+  ],
+  "bridge_mode": "fixture_file",
+  "sim_message": "using_fixture:tests/fixtures/rlbench_observation_like.json; prior_sim_note=",
+  "deepest_reached_stage": "import_fail",
+  "blocker_summary": "rlbench import blocked: rlbench not available: No module named 'rlbench'",
+  "layer_status": {
+    "import": false,
+    "simulator_locate": false,
+    "env_create": false,
+    "reset": false,
+    "observation": false,
+    "memory_bridge": true,
+    "planner_smoke": true
+  },
+  "stages": {
+    "diagnostics": {
+      "1_import_rlbench": {
+        "ok": false,
+        "message": "rlbench not available: No module named 'rlbench'"
+      },
+      "1b_import_pyrep": {
+        "ok": false,
+        "message": "pyrep not available: No module named 'pyrep'"
+      },
+      "2_simulator_locate": {
+        "ok": false,
+        "COPPELIASIM_ROOT": "",
+        "LD_LIBRARY_PATH_set": true,
+        "LD_LIBRARY_PATH_head": "(host-specific; omitted in committed snapshot)",
+        "notes": "COPPELIASIM_ROOT unset"
+      },
+      "3_env_construct": {
+        "attempted": false,
+        "ok": null,
+        "message": "see sim_env_create smoke"
+      },
+      "4_task_reset": {
+        "attempted": false,
+        "ok": null,
+        "message": "see sim_reset smoke"
+      },
+      "5_observation_capture": {
+        "attempted": false,
+        "ok": null,
+        "message": "see sim_reset smoke"
+      },
+      "6_scene_memory_mapping": {
+        "ok": true,
+        "message": "observation_like_dict_to_scene_memory always available (fixture or live dict)"
+      }
+    },
+    "sim_import_only": {
+      "mode": "sim_import_only",
+      "ok": false,
+      "message": "rlbench not available: No module named 'rlbench'",
+      "meta": {
+        "task_listing_message": "rlbench not available: No module named 'rlbench'",
+        "task_class_names_sample": [
+          "ReachTarget",
+          "OpenDrawer",
+          "CloseDrawer",
+          "PickUpCup"
+        ]
+      }
+    },
+    "sim_env_create": {
+      "mode": "sim_env_create",
+      "ok": false,
+      "message": "skipped: rlbench import failed",
+      "meta": {}
+    },
+    "sim_reset": {
+      "mode": "sim_reset",
+      "ok": false,
+      "message": "skipped: rlbench import failed",
+      "meta": {}
+    },
+    "fixture_file": {
+      "mode": "fixture_file",
+      "ok": true,
+      "message": "loaded tests/fixtures/rlbench_observation_like.json",
+      "meta": {
+        "path": "tests/fixtures/rlbench_observation_like.json",
+        "used_for_memory": true
+      }
+    },
+    "memory_planner": {
+      "mode": "memory_planner",
+      "ok": true,
+      "message": "observation → SceneMemory → RuleBasedPlanner",
+      "meta": {
+        "memory_bridge_ok": true,
+        "planner_smoke_ok": true,
+        "memory_object_ids": [
+          "workspace",
+          "gripper",
+          "rlbench_target"
+        ]
+      }
+    }
+  },
+  "task_name": "ReachTarget",
+  "instruction": "reach the target",
+  "planner_output": {
+    "task": "open_drawer",
+    "subgoal": "Open the drawer.",
+    "target_object": "drawer",
+    "skill": "open",
+    "success_check": "drawer has state tag 'open'",
+    "fallback": "try alternate approach vector",
+    "reasoning": "Heuristic default when instruction is underspecified.",
+    "confidence": 0.5
+  },
+  "memory_object_ids": [
+    "workspace",
+    "gripper",
+    "rlbench_target"
+  ],
+  "relations": [
+    [
+      "gripper",
+      "near",
+      "rlbench_target"
+    ],
+    [
+      "rlbench_target",
+      "on",
+      "workspace"
+    ]
+  ],
+  "honest_scope": "Not an RLBench benchmark score; cognition-layer bridge + planner only unless sim_reset succeeded."
+}

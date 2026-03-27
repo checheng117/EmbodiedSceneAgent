@@ -1,0 +1,9 @@
+# Verifier 监督训练占位（v0 以规则版为主）
+model: null
+train:
+  batch_size: 64
+  epochs: 10
+  learning_rate: 3.0e-4
+labels:
+  format: verifier_labels_jsonl
+notes: "可选轻量分类器；默认仍使用 StateDiffVerifier。"

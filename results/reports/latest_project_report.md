@@ -1,0 +1,876 @@
+# EmbodiedSceneAgent — project report (auto)
+
+_Generated: `2026-03-27T14:22:26.826195+00:00`_
+
+## Unified headline facts (machine-derived)
+
+```json
+{
+  "generated_utc": "2026-03-27T14:22:26.826195+00:00",
+  "strongest_real_result": {
+    "name": "planner JSONL proxy (base vs tuned)",
+    "path": "results/eval/planner_base_vs_tuned/metrics.json",
+    "note": "Not official CALVIN benchmark."
+  },
+  "strongest_real_results_all": [
+    {
+      "name": "planner JSONL proxy (base vs tuned)",
+      "path": "results/eval/planner_base_vs_tuned/metrics.json",
+      "note": "Not official CALVIN benchmark."
+    },
+    {
+      "name": "E2 ablation on mock (symbolic)",
+      "path": "results/experiments/e2_ablation/e2_mock_20260325T090753Z",
+      "note": "no_verifier vs verifier_only vs verifier_plus_replan \u2014 not official CALVIN."
+    },
+    {
+      "name": "E2 ablation on CALVIN fixture batch",
+      "path": "results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z",
+      "note": "Fixture minimal loop \u2014 **not** official CALVIN ablation."
+    },
+    {
+      "name": "E2 ablation on CALVIN official debug npz (vector teacher)",
+      "path": "results/experiments/e2_ablation/e2_doc_refresh_same_task",
+      "note": "Official debug dataset vectors + symbolic minimal loop \u2014 **not** leaderboard."
+    }
+  ],
+  "strongest_hybrid_result": {
+    "kind": "eval_batch",
+    "metrics_headline": {
+      "replan_parse_success_rate": 1.0,
+      "validated_revision_rate": 1.0,
+      "fallback_rate": 0.0,
+      "repair_success_rate": 1.0,
+      "unknown_failure_rate": 0.6153846153846154,
+      "unknown_skill_rate": null,
+      "alias_normalization_count": null,
+      "invalid_skill_count": null
+    },
+    "case_path": "results/demos/hybrid_replanner_cases/case_llm_repair_success.json",
+    "parse_error_kind_counts": {},
+    "parse_breakdown_empty_reason": "Latest hybrid replanner eval batch had no LLM parse failures; all audited calls reached `fallback_stage=validated`. Breakdown counts are therefore empty \u2014 not a claim of infinite robustness."
+  },
+  "e2_best_story": {
+    "mock_status": "available",
+    "mock_latest_dir": "results/experiments/e2_ablation/e2_mock_20260325T090753Z",
+    "calvin_fixture_status": "available",
+    "calvin_latest_dir": "results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z",
+    "calvin_debug_real_status": "available",
+    "calvin_debug_real_latest_dir": "results/experiments/e2_ablation/e2_doc_refresh_same_task",
+    "mock_verifier_plus_replan_task_completion_rate": 1.0,
+    "mock_verifier_plus_replan_recovery_success_rate": 0.75,
+    "one_line": "E2 mock (symbolic): latest batch shows verifier_plus_replan task_completion=1.0, recovery_success_rate=0.75 \u2014 **fixture/smoke**, not official CALVIN.",
+    "calvin_debug_real_note": "E2 on official CALVIN **debug** vectors: status `available` \u2014 **not** leaderboard."
+  },
+  "hybrid_calvin_debug_real_headline": {
+    "replan_parse_success_rate": 0.5,
+    "validated_revision_rate": 0.5,
+    "fallback_rate": 0.5,
+    "repair_success_rate": 0.0,
+    "unknown_failure_rate": 0.1,
+    "unknown_skill_rate": 0.0,
+    "alias_normalization_count": 0,
+    "invalid_skill_count": 0
+  },
+  "rlbench_deepest_stage": "import_fail",
+  "rlbench_blocker_summary": "rlbench import blocked: rlbench not available: No module named 'rlbench'",
+  "rlbench_bridge_mode": "fixture_file",
+  "rlbench_memory_bridge": true,
+  "open_gaps": [
+    "Official CALVIN / RLBench leaderboard numbers: not claimed.",
+    "RLBench full sim: blocked without CoppeliaSim + PyRep (see docs/rlbench_install_log.md) unless bridge_mode=sim_reset.",
+    "A100 7B production training: template only.",
+    "VLABench: planning doc only.",
+    "RLBench Python import: false on this machine \u2014 using fixture bridge for cognition smoke."
+  ],
+  "smoke_vs_future_note": "RLBench: **real** = fixture\u2192memory\u2192planner smoke; **sim_reset** = only if CoppeliaSim stack OK. Official CALVIN/RLBench leaderboards: **future_only**. A100 7B / VLABench: **future_only**."
+}
+```
+
+## Project Status Snapshot
+
+```json
+{
+  "cognition_layer": "implemented (mock + CALVIN fixture + CALVIN debug vectors + RLBench observation bridge)",
+  "rlbench_import": false,
+  "rlbench_simulator_locate": false,
+  "rlbench_env_create": false,
+  "rlbench_reset": false,
+  "rlbench_deepest_reached_stage": "import_fail",
+  "rlbench_blocker_summary": "rlbench import blocked: rlbench not available: No module named 'rlbench'",
+  "rlbench_memory_bridge": true,
+  "rlbench_planner_smoke": true,
+  "rlbench_bridge_mode": "fixture_file",
+  "e2_on_mock": "available",
+  "e2_on_calvin_fixture": "available",
+  "e2_on_calvin_debug_real": "available",
+  "e2_best_case_paths": {
+    "case1_none.json": "results/demos/e2_ablation_cases/case1_none.json",
+    "case2_verifier_only.json": "results/demos/e2_ablation_cases/case2_verifier_only.json",
+    "case3_plus_replan.json": "results/demos/e2_ablation_cases/case3_plus_replan.json",
+    "mock_selection_meta.json": "results/demos/e2_ablation_cases/mock_selection_meta.json",
+    "calvin_case_replan_fixes_stuck_verifier_only.json": "results/demos/e2_ablation_cases/calvin_case_replan_fixes_stuck_verifier_only.json",
+    "calvin_case_repair_failed_after_failure_detected.json": "results/demos/e2_ablation_cases/calvin_case_repair_failed_after_failure_detected.json",
+    "calvin_selection_meta.json": "results/demos/e2_ablation_cases/calvin_selection_meta.json",
+    "calvin_debug_real_selection_meta.json": "results/demos/e2_ablation_cases/calvin_debug_real_selection_meta.json",
+    "calvin_debug_real_case_verifier_only.json": "results/demos/e2_ablation_cases/calvin_debug_real_case_verifier_only.json",
+    "calvin_debug_real_case_verifier_plus_replan.json": "results/demos/e2_ablation_cases/calvin_debug_real_case_verifier_plus_replan.json",
+    "calvin_debug_real_aligned_selection_meta.json": "results/demos/e2_ablation_cases/calvin_debug_real_aligned_selection_meta.json",
+    "calvin_debug_real_aligned_case_verifier_only.json": "results/demos/e2_ablation_cases/calvin_debug_real_aligned_case_verifier_only.json",
+    "calvin_debug_real_aligned_case_verifier_plus_replan.json": "results/demos/e2_ablation_cases/calvin_debug_real_aligned_case_verifier_plus_replan.json",
+    "calvin_debug_same_task_selection_meta.json": "results/demos/e2_ablation_cases/calvin_debug_same_task_selection_meta.json",
+    "calvin_debug_same_task_case_verifier_only.json": "results/demos/e2_ablation_cases/calvin_debug_same_task_case_verifier_only.json",
+    "calvin_debug_same_task_case_verifier_plus_replan.json": "results/demos/e2_ablation_cases/calvin_debug_same_task_case_verifier_plus_replan.json"
+  },
+  "mock_vs_calvin_short_note": "Mock symbolic isolates verifier/replan mechanism; CALVIN fixture exercises adapter-shaped teacher state. Expect wiring consistency, not numeric parity with official benchmarks.",
+  "hybrid_replanner": "available",
+  "hybrid_strongest_kind": "eval_batch",
+  "hybrid_replanner_batch_headline": {
+    "replan_parse_success_rate": 1.0,
+    "validated_revision_rate": 1.0,
+    "fallback_rate": 0.0,
+    "repair_success_rate": 1.0,
+    "unknown_failure_rate": 0.6153846153846154,
+    "unknown_skill_rate": null,
+    "alias_normalization_count": null,
+    "invalid_skill_count": null
+  },
+  "hybrid_parse_error_breakdown": {},
+  "strongest_hybrid_case_path": "results/demos/hybrid_replanner_cases/case_llm_repair_success.json",
+  "hybrid_calvin_debug_real_batch_headline": {
+    "replan_parse_success_rate": 0.5,
+    "validated_revision_rate": 0.5,
+    "fallback_rate": 0.5,
+    "repair_success_rate": 0.0,
+    "unknown_failure_rate": 0.1,
+    "unknown_skill_rate": 0.0,
+    "alias_normalization_count": 0,
+    "invalid_skill_count": 0
+  },
+  "hybrid_calvin_debug_real_aligned_batch_headline": {
+    "replan_parse_success_rate": 0.6666666666666666,
+    "validated_revision_rate": 0.6666666666666666,
+    "fallback_rate": 0.33333333333333337,
+    "repair_success_rate": 0.0,
+    "unknown_failure_rate": 0.10344827586206896,
+    "unknown_skill_rate": 0.16666666666666666,
+    "alias_normalization_count": 1,
+    "invalid_skill_count": 1
+  },
+  "hybrid_calvin_debug_same_task_batch_headline": {
+    "replan_parse_success_rate": 0.5,
+    "validated_revision_rate": 0.5,
+    "fallback_rate": 0.5,
+    "repair_success_rate": 0.0,
+    "unknown_failure_rate": 0.1,
+    "unknown_skill_rate": 0.0,
+    "alias_normalization_count": 0,
+    "invalid_skill_count": 0
+  },
+  "calvin_debug_alignment_stats_present": true,
+  "skill_schema_audit_present": true
+}
+```
+
+## Current Strongest Results
+
+- **planner JSONL proxy (base vs tuned)**: `results/eval/planner_base_vs_tuned/metrics.json` — _Not official CALVIN benchmark._
+- **E2 ablation on mock (symbolic)**: `results/experiments/e2_ablation/e2_mock_20260325T090753Z` — _no_verifier vs verifier_only vs verifier_plus_replan — not official CALVIN._
+- **E2 ablation on CALVIN fixture batch**: `results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z` — _Fixture minimal loop — **not** official CALVIN ablation._
+- **E2 ablation on CALVIN official debug npz (vector teacher)**: `results/experiments/e2_ablation/e2_doc_refresh_same_task` — _Official debug dataset vectors + symbolic minimal loop — **not** leaderboard._
+
+## E2 Ablation (mock + CALVIN fixture)
+
+```json
+{
+  "e2_on_mock": {
+    "status": "available",
+    "backend": "mock",
+    "latest_dir": "results/experiments/e2_ablation/e2_mock_20260325T090753Z",
+    "modes": {
+      "none": {
+        "verifier_mode": "none",
+        "n_episodes": 16,
+        "task_completion_rate": 1.0,
+        "failure_detected_rate": 0.0,
+        "failure_detected_steps": 0,
+        "total_steps": 66,
+        "state_unchanged_rate": 0.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 0,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 4.125,
+        "failure_taxonomy_counts": {},
+        "notes": {
+          "setting": "MockEmbodiedEnv symbolic \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_only": {
+        "verifier_mode": "verifier_only",
+        "n_episodes": 16,
+        "task_completion_rate": 1.0,
+        "failure_detected_rate": 0.2727272727272727,
+        "failure_detected_steps": 18,
+        "total_steps": 66,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 12,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 4.125,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 18
+        },
+        "notes": {
+          "setting": "MockEmbodiedEnv symbolic \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_plus_replan": {
+        "verifier_mode": "verifier_plus_replan",
+        "n_episodes": 16,
+        "task_completion_rate": 1.0,
+        "failure_detected_rate": 0.2222222222222222,
+        "failure_detected_steps": 12,
+        "total_steps": 54,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 0.75,
+        "recovery_success_rate": 0.75,
+        "recovery_eligible_episodes": 12,
+        "recovery_success_after_replan_episodes": 12,
+        "average_steps": 3.375,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 12,
+          "replan::state_unchanged": 6
+        },
+        "notes": {
+          "setting": "MockEmbodiedEnv symbolic \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      }
+    },
+    "experiment_id": "e2_mock_20260325T090753Z"
+  },
+  "e2_on_calvin_fixture": {
+    "status": "available",
+    "backend": "calvin_fixture",
+    "latest_dir": "results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z",
+    "modes": {
+      "none": {
+        "verifier_mode": "none",
+        "n_episodes": 16,
+        "task_completion_rate": 1.0,
+        "failure_detected_rate": 0.0,
+        "failure_detected_steps": 0,
+        "total_steps": 36,
+        "state_unchanged_rate": 0.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 0,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 2.25,
+        "failure_taxonomy_counts": {},
+        "notes": {
+          "setting": "CALVIN **fixture** minimal loop (``run_calvin_minimal_episode``) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_only": {
+        "verifier_mode": "verifier_only",
+        "n_episodes": 16,
+        "task_completion_rate": 1.0,
+        "failure_detected_rate": 0.0,
+        "failure_detected_steps": 0,
+        "total_steps": 36,
+        "state_unchanged_rate": 0.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 0,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 2.25,
+        "failure_taxonomy_counts": {},
+        "notes": {
+          "setting": "CALVIN **fixture** minimal loop (``run_calvin_minimal_episode``) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_plus_replan": {
+        "verifier_mode": "verifier_plus_replan",
+        "n_episodes": 16,
+        "task_completion_rate": 1.0,
+        "failure_detected_rate": 0.0,
+        "failure_detected_steps": 0,
+        "total_steps": 36,
+        "state_unchanged_rate": 0.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 0,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 2.25,
+        "failure_taxonomy_counts": {},
+        "notes": {
+          "setting": "CALVIN **fixture** minimal loop (``run_calvin_minimal_episode``) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      }
+    },
+    "experiment_id": "e2_calvin_fixture_20260325T090754Z"
+  },
+  "e2_on_calvin_debug_real": {
+    "status": "available",
+    "backend": "calvin_debug_real",
+    "latest_dir": "results/experiments/e2_ablation/e2_doc_refresh_same_task",
+    "modes": {
+      "none": {
+        "verifier_mode": "none",
+        "n_episodes": 8,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.0,
+        "failure_detected_steps": 0,
+        "total_steps": 96,
+        "state_unchanged_rate": 0.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 0,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {},
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`same_task_subset` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_only": {
+        "verifier_mode": "verifier_only",
+        "n_episodes": 8,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.9583333333333334,
+        "failure_detected_steps": 92,
+        "total_steps": 96,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 8,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 92
+        },
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`same_task_subset` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_plus_replan": {
+        "verifier_mode": "verifier_plus_replan",
+        "n_episodes": 8,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.9583333333333334,
+        "failure_detected_steps": 92,
+        "total_steps": 96,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 11.5,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 8,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 92,
+          "replan::state_unchanged": 92
+        },
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`same_task_subset` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      }
+    },
+    "experiment_id": "e2_doc_refresh_same_task"
+  },
+  "e2_on_calvin_debug_real_aligned": {
+    "status": "available",
+    "backend": "calvin_debug_real",
+    "calvin_debug_batch": "grouped_sequence",
+    "latest_dir": "results/experiments/e2_ablation/e2_doc_refresh_aligned",
+    "modes": {
+      "none": {
+        "verifier_mode": "none",
+        "n_episodes": 16,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.0,
+        "failure_detected_steps": 0,
+        "total_steps": 192,
+        "state_unchanged_rate": 0.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 0,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {},
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`grouped_sequence` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_only": {
+        "verifier_mode": "verifier_only",
+        "n_episodes": 16,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.9479166666666666,
+        "failure_detected_steps": 182,
+        "total_steps": 192,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 16,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 182
+        },
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`grouped_sequence` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_plus_replan": {
+        "verifier_mode": "verifier_plus_replan",
+        "n_episodes": 16,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.9479166666666666,
+        "failure_detected_steps": 182,
+        "total_steps": 192,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 11.375,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 16,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 182,
+          "replan::state_unchanged": 182
+        },
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`grouped_sequence` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      }
+    },
+    "experiment_id": "e2_doc_refresh_aligned"
+  },
+  "e2_on_calvin_debug_same_task": {
+    "status": "available",
+    "backend": "calvin_debug_real",
+    "calvin_debug_batch": "same_task_subset",
+    "latest_dir": "results/experiments/e2_ablation/e2_doc_refresh_same_task",
+    "modes": {
+      "none": {
+        "verifier_mode": "none",
+        "n_episodes": 8,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.0,
+        "failure_detected_steps": 0,
+        "total_steps": 96,
+        "state_unchanged_rate": 0.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 0,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {},
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`same_task_subset` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_only": {
+        "verifier_mode": "verifier_only",
+        "n_episodes": 8,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.9583333333333334,
+        "failure_detected_steps": 92,
+        "total_steps": 96,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 0.0,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 8,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 92
+        },
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`same_task_subset` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      },
+      "verifier_plus_replan": {
+        "verifier_mode": "verifier_plus_replan",
+        "n_episodes": 8,
+        "task_completion_rate": 0.0,
+        "failure_detected_rate": 0.9583333333333334,
+        "failure_detected_steps": 92,
+        "total_steps": 96,
+        "state_unchanged_rate": 1.0,
+        "replan_trigger_rate": 11.5,
+        "recovery_success_rate": 0.0,
+        "recovery_eligible_episodes": 8,
+        "recovery_success_after_replan_episodes": 0,
+        "average_steps": 12.0,
+        "failure_taxonomy_counts": {
+          "state_unchanged": 92,
+          "replan::state_unchanged": 92
+        },
+        "notes": {
+          "setting": "CALVIN **official debug** ``*.npz`` vectors \u2192 vector teacher \u2192 minimal loop (symbolic skills) \u2014 batch=`same_task_subset` (same-task-like when applicable) \u2014 not official CALVIN benchmark.",
+          "verifier_none": "failure_detected_rate forced 0 (verifier always passes).",
+          "verifier_only": "no replan branch; recovery_success_rate expected ~0 unless accidental task success."
+        }
+      }
+    },
+    "experiment_id": "e2_doc_refresh_same_task"
+  }
+}
+```
+
+## RLBench Bridge Status
+
+```json
+{
+  "status": "ok",
+  "path": "results/rlbench_dev_smoke.json",
+  "import_ok": false,
+  "bridge_mode": "fixture_file",
+  "task_name": "ReachTarget",
+  "sim_message_head": "using_fixture:tests/fixtures/rlbench_observation_like.json; prior_sim_note=",
+  "layer_status": {
+    "import": false,
+    "simulator_locate": false,
+    "env_create": false,
+    "reset": false,
+    "observation": false,
+    "memory_bridge": true,
+    "planner_smoke": true
+  },
+  "import_layer": false,
+  "simulator_locate_layer": false,
+  "env_create_layer": false,
+  "reset_layer": false,
+  "observation_layer": false,
+  "memory_bridge": true,
+  "planner_smoke": true,
+  "stages_present": [
+    "diagnostics",
+    "fixture_file",
+    "memory_planner",
+    "sim_env_create",
+    "sim_import_only",
+    "sim_reset"
+  ],
+  "deepest_reached_stage": "import_fail",
+  "blocker_summary": "rlbench import blocked: rlbench not available: No module named 'rlbench'",
+  "stack_diagnosis_path": "results/rlbench_stack_diagnosis.json"
+}
+```
+
+## Hybrid Replanner Status
+
+```json
+{
+  "status": "available",
+  "strongest_artifact": {
+    "kind": "eval_batch",
+    "latest_dir": "results/experiments/hybrid_replanner_eval/hybrid_replanner_eval_20260325T090504Z",
+    "metrics_headline": {
+      "replan_parse_success_rate": 1.0,
+      "validated_revision_rate": 1.0,
+      "fallback_rate": 0.0,
+      "repair_success_rate": 1.0,
+      "unknown_failure_rate": 0.6153846153846154,
+      "unknown_skill_rate": null,
+      "alias_normalization_count": null,
+      "invalid_skill_count": null
+    },
+    "fallback_reason_counts": {},
+    "fallback_stage_counts": {
+      "validated": 8
+    },
+    "parse_error_kind_counts": {},
+    "hybrid_replanner_batch_headline": {
+      "replan_parse_success_rate": 1.0,
+      "validated_revision_rate": 1.0,
+      "fallback_rate": 0.0,
+      "repair_success_rate": 1.0,
+      "unknown_failure_rate": 0.6153846153846154,
+      "unknown_skill_rate": null,
+      "alias_normalization_count": null,
+      "invalid_skill_count": null
+    },
+    "hybrid_parse_error_breakdown": {},
+    "backend": null
+  },
+  "eval_batch": {
+    "kind": "eval_batch",
+    "latest_dir": "results/experiments/hybrid_replanner_eval/hybrid_replanner_eval_20260325T090504Z",
+    "metrics_headline": {
+      "replan_parse_success_rate": 1.0,
+      "validated_revision_rate": 1.0,
+      "fallback_rate": 0.0,
+      "repair_success_rate": 1.0,
+      "unknown_failure_rate": 0.6153846153846154,
+      "unknown_skill_rate": null,
+      "alias_normalization_count": null,
+      "invalid_skill_count": null
+    },
+    "fallback_reason_counts": {},
+    "fallback_stage_counts": {
+      "validated": 8
+    },
+    "parse_error_kind_counts": {},
+    "hybrid_replanner_batch_headline": {
+      "replan_parse_success_rate": 1.0,
+      "validated_revision_rate": 1.0,
+      "fallback_rate": 0.0,
+      "repair_success_rate": 1.0,
+      "unknown_failure_rate": 0.6153846153846154,
+      "unknown_skill_rate": null,
+      "alias_normalization_count": null,
+      "invalid_skill_count": null
+    },
+    "hybrid_parse_error_breakdown": {},
+    "backend": null
+  },
+  "eval_batch_calvin_debug_real": {
+    "kind": "eval_batch",
+    "latest_dir": "results/experiments/hybrid_replanner_eval/hybrid_calvin_debug_same_task_20260326T095232Z",
+    "metrics_headline": {
+      "replan_parse_success_rate": 0.5,
+      "validated_revision_rate": 0.5,
+      "fallback_rate": 0.5,
+      "repair_success_rate": 0.0,
+      "unknown_failure_rate": 0.1,
+      "unknown_skill_rate": 0.0,
+      "alias_normalization_count": 0,
+      "invalid_skill_count": 0
+    },
+    "fallback_reason_counts": {
+      "null field: success_check": 1
+    },
+    "fallback_stage_counts": {
+      "validated": 1,
+      "parse_validate": 1
+    },
+    "parse_error_kind_counts": {
+      "missing_required_keys": 1
+    },
+    "hybrid_replanner_batch_headline": {
+      "replan_parse_success_rate": 0.5,
+      "validated_revision_rate": 0.5,
+      "fallback_rate": 0.5,
+      "repair_success_rate": 0.0,
+      "unknown_failure_rate": 0.1,
+      "unknown_skill_rate": 0.0,
+      "alias_normalization_count": 0,
+      "invalid_skill_count": 0
+    },
+    "hybrid_parse_error_breakdown": {
+      "missing_required_keys": 1
+    },
+    "backend": "calvin_debug_real"
+  },
+  "eval_batch_calvin_debug_real_aligned": {
+    "kind": "eval_batch",
+    "latest_dir": "results/experiments/hybrid_replanner_eval/hybrid_calvin_debug_real_aligned_20260326T094544Z",
+    "metrics_headline": {
+      "replan_parse_success_rate": 0.6666666666666666,
+      "validated_revision_rate": 0.6666666666666666,
+      "fallback_rate": 0.33333333333333337,
+      "repair_success_rate": 0.0,
+      "unknown_failure_rate": 0.10344827586206896,
+      "unknown_skill_rate": 0.16666666666666666,
+      "alias_normalization_count": 1,
+      "invalid_skill_count": 1
+    },
+    "fallback_reason_counts": {
+      "null field: success_check": 1,
+      "skill not in canonical vocabulary after alias normalize: 'open_drawer'": 1
+    },
+    "fallback_stage_counts": {
+      "validated": 4,
+      "parse_validate": 2
+    },
+    "parse_error_kind_counts": {
+      "missing_required_keys": 1,
+      "invalid_skill": 1
+    },
+    "hybrid_replanner_batch_headline": {
+      "replan_parse_success_rate": 0.6666666666666666,
+      "validated_revision_rate": 0.6666666666666666,
+      "fallback_rate": 0.33333333333333337,
+      "repair_success_rate": 0.0,
+      "unknown_failure_rate": 0.10344827586206896,
+      "unknown_skill_rate": 0.16666666666666666,
+      "alias_normalization_count": 1,
+      "invalid_skill_count": 1
+    },
+    "hybrid_parse_error_breakdown": {
+      "missing_required_keys": 1,
+      "invalid_skill": 1
+    },
+    "backend": "calvin_debug_real"
+  },
+  "eval_batch_calvin_debug_same_task": {
+    "kind": "eval_batch",
+    "latest_dir": "results/experiments/hybrid_replanner_eval/hybrid_calvin_debug_same_task_20260326T095232Z",
+    "metrics_headline": {
+      "replan_parse_success_rate": 0.5,
+      "validated_revision_rate": 0.5,
+      "fallback_rate": 0.5,
+      "repair_success_rate": 0.0,
+      "unknown_failure_rate": 0.1,
+      "unknown_skill_rate": 0.0,
+      "alias_normalization_count": 0,
+      "invalid_skill_count": 0
+    },
+    "fallback_reason_counts": {
+      "null field: success_check": 1
+    },
+    "fallback_stage_counts": {
+      "validated": 1,
+      "parse_validate": 1
+    },
+    "parse_error_kind_counts": {
+      "missing_required_keys": 1
+    },
+    "hybrid_replanner_batch_headline": {
+      "replan_parse_success_rate": 0.5,
+      "validated_revision_rate": 0.5,
+      "fallback_rate": 0.5,
+      "repair_success_rate": 0.0,
+      "unknown_failure_rate": 0.1,
+      "unknown_skill_rate": 0.0,
+      "alias_normalization_count": 0,
+      "invalid_skill_count": 0
+    },
+    "hybrid_parse_error_breakdown": {
+      "missing_required_keys": 1
+    },
+    "backend": "calvin_debug_real"
+  },
+  "smoke": {
+    "kind": "smoke",
+    "latest_dir": "results/experiments/hybrid_replanner_smoke/hybrid_replanner_20260325T084505Z",
+    "success": true,
+    "replan_count": 1,
+    "first_replan_audit": {
+      "original_subgoal": "deliberate verifier-unknown skill for hybrid smoke",
+      "failure_type": "unknown_failure",
+      "repair_strategy": "llm_planner_fallback",
+      "revised_subgoal": "reach the red block and place it inside the drawer",
+      "whether_rule_based": false,
+      "notes": "hybrid_after_rules;delegate_rule_planner_with_failure_context",
+      "llm_replanner_called": true,
+      "replanner_parse_ok": true,
+      "revised_plan_validated": true,
+      "fallback_reason": null,
+      "fallback_stage": "validated"
+    },
+    "fallback_stats": {
+      "llm_replanner_calls": 1,
+      "replanner_parse_ok_count": 1,
+      "revised_plan_validated_count": 1,
+      "fallback_reason_counts": {},
+      "fallback_stage_counts": {
+        "validated": 1
+      }
+    }
+  },
+  "strongest_hybrid_case_path": "results/demos/hybrid_replanner_cases/case_llm_repair_success.json"
+}
+```
+
+## Eval metrics (JSONL proxy)
+
+```json
+{
+  "n": 73,
+  "format_compliance_rate_base": 1.0,
+  "format_compliance_rate_tuned": 1.0,
+  "tool_use_accuracy_base": 0.0821917808219178,
+  "tool_use_accuracy_tuned": 0.2191780821917808,
+  "target_match_rate_base": 0.3287671232876712,
+  "target_match_rate_tuned": 0.4794520547945205,
+  "task_completion_rate_base": 0.0684931506849315,
+  "task_completion_rate_tuned": 0.2054794520547945,
+  "error_recovery_rate_tuned": 0.0,
+  "recovery_eval_rows": 8,
+  "notes": "tool_use_accuracy compares final Skill: line to reference JSONL target_text; target_match_rate is an action-target string proxy (last Target: line). task_completion_rate is a strict proxy: format_compliance AND tool_skill_match AND target_match. error_recovery_rate_tuned is recovery_style_ok rate on rows with trajectory_type==recovery only; not CALVIN env success."
+}
+```
+
+## Curated demo links
+
+- **e2_cases**: `docs/failure_cases/e2_ablation_cases.md`
+- **e2_demos**: `results/demos/e2_ablation_cases/`
+- **rlbench_demos**: `results/demos/rlbench_fixture_bridge/`
+- **mock_demos**: `results/demos/success_put_block/`
+- **hybrid_experiments_smoke**: `results/experiments/hybrid_replanner_smoke/`
+- **hybrid_experiments_eval**: `results/experiments/hybrid_replanner_eval/`
+- **e2_mock_vs_calvin_table**: `docs/tables/e2_ablation_mock_vs_calvin_fixture.md`
+- **e2_three_backend_table**: `docs/tables/e2_ablation_mock_vs_calvin_fixture_vs_calvin_debug_real.md`
+- **calvin_debug_real_planner_stats**: `docs/calvin_debug_real_data_stats.md`
+- **calvin_debug_alignment_stats**: `docs/calvin_debug_alignment_stats.md`
+- **calvin_debug_alignment_audit**: `docs/calvin_debug_alignment_audit.md`
+- **calvin_debug_same_task_subset**: `docs/calvin_debug_same_task_subset.md`
+- **skill_schema_audit**: `docs/skill_schema_audit.md`
+- **calvin_debug_alignment_comparison**: `docs/tables/calvin_debug_alignment_comparison.md`
+- **hybrid_replanner_cases**: `docs/failure_cases/hybrid_replanner_cases.md`
+
+## Open gaps / honest limitations
+
+- Official CALVIN / RLBench leaderboard numbers: not claimed.
+- RLBench full sim: blocked without CoppeliaSim + PyRep (see docs/rlbench_install_log.md) unless bridge_mode=sim_reset.
+- A100 7B production training: template only.
+- VLABench: planning doc only.
+- RLBench Python import: false on this machine — using fixture bridge for cognition smoke.
+
+## Failure taxonomy (registry snapshot)
+
+| failure_type | condition (short) | replan hint |
+|---|---|---|
+| `target_not_found` | Planned target object id absent from post-action scene memory. | Re-ground from instruction + memory; optional LLM planner (hybrid path). |
+| `wrong_object_grounded` | Action applied to an object inconsistent with instruction or planner target. | Rule: ``reselect_target_reach`` — reposition / reselect correct instance. |
+| `precondition_unsatisfied` | Necessary state tags or spatial preconditions not met before skill. | Insert prerequisite subtask (open drawer, grasp) via rule replanner. |
+| `state_unchanged` | Skill ran but relevant object tags unchanged (same as legacy ``action_no_effect` | Retry with alternate fallback wording or approach vector. |
+| `action_no_effect` | Legacy wire value; treat as :attr:`FailureType.STATE_UNCHANGED` in new code. | Same as ``state_unchanged``. |
+| `blocked_or_collision` | Physical blocking or collision prevents progress (reserved for sim hooks). | Retreat / clear path / alternate skill ordering. |
+| `occlusion_or_low_confidence` | Target has low visibility or confidence in memory. | Observe or reposition sensor before acting. |
+| `unknown_failure` | Verifier cannot classify; unhandled skill or ambiguous diff. | Hybrid LLM replanner if configured; else delegate to planner with failure_log. |
+
+## Artifact index
+
+- **episode_log_schema**: `docs/episode_log_schema.md`
+- **scene_memory_contract_v2**: `docs/scene_memory_contract_v2.md`
+- **failure_taxonomy_doc**: `docs/failure_taxonomy.md`
+- **architecture_figure**: `docs/figures/architecture_v2.svg`
+- **demo_assets**: `results/demos/`
+- **sample_episode_logs**: `results/episode_logs/`
+- **case_studies**: `results/eval/base_vs_tuned_case_studies.md`
+- **e2_table**: `docs/tables/e2_ablation_summary.md`
+- **hybrid_results_doc**: `docs/replanner_hybrid_results.md`
+- **calvin_debug_dataset_audit**: `docs/calvin_debug_dataset_audit.md`

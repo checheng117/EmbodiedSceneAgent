@@ -1,0 +1,16 @@
+# 3090 最小 SFT（短步数、小 batch）；与 qwen25vl_3b_lora.yaml 同一 backbone
+model_id: Qwen/Qwen2.5-VL-3B-Instruct
+precision: bf16
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules: ["q_proj", "v_proj"]
+train:
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 4
+  max_steps: 80
+  learning_rate: 1.0e-4
+eval:
+  batch_size: 1
+notes: "Minimal real run preset; increase max_steps for better fit."

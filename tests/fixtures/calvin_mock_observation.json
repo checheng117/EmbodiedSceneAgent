@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "disclaimer": "STRUCTURE SIMULATION ONLY — not an official CALVIN dataset or env export; field layout is for local adapter development and may omit or rename real keys.",
+    "format_hint": "calvin_teacher_v0"
+  },
+  "calvin_teacher_v0": {
+    "frame_id": "0",
+    "timestamp_s": 0.0,
+    "robot": {
+      "held_object_uid": null,
+      "gripper_open": true
+    },
+    "scene_objects": [
+      {
+        "uid": "drawer",
+        "category": "slider",
+        "instance_name": "drawer",
+        "position": [0.6, 0.0, 0.35],
+        "drawer_open": false
+      },
+      {
+        "uid": "red_block",
+        "category": "block",
+        "instance_name": "red block",
+        "position": [0.45, 0.0, 0.12],
+        "in_drawer": false,
+        "held": false
+      }
+    ]
+  }
+}

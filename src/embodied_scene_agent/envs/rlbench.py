@@ -1,0 +1,20 @@
+"""RLBench subset adapter (skeleton)."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from embodied_scene_agent.envs.base import BaseEmbodiedEnv
+
+
+class RLBenchEnvAdapter(BaseEmbodiedEnv):
+    """TODO: map RLBench task demo state to unified teacher dict."""
+
+    def __init__(self, **_kwargs: Any) -> None:
+        self._kwargs = _kwargs
+
+    def reset(self, instruction: str) -> dict[str, Any]:
+        raise NotImplementedError("RLBenchEnvAdapter.reset not wired in v0.")
+
+    def get_teacher_state(self) -> dict[str, Any]:
+        raise NotImplementedError("RLBenchEnvAdapter.get_teacher_state not wired in v0.")

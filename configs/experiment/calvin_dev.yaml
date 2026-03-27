@@ -1,0 +1,6 @@
+# CALVIN 开发接入（teacher-state）— 占位
+env: calvin
+split: debug
+max_episodes: 10
+teacher_state: true
+notes: "待 CalvinEnvAdapter 实现后启用；不伪造成功率。"

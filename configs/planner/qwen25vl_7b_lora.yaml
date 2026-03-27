@@ -1,0 +1,19 @@
+# Qwen2.5-VL-7B planner LoRA — A100 80G 正式训练 / 评测入口（占位）
+model_id: Qwen/Qwen2.5-VL-7B-Instruct
+precision: bf16
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.05
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
+train:
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 16
+  max_steps: 8000
+  learning_rate: 5.0e-5
+eval:
+  batch_size: 1
+experiment_id_env: "EXPERIMENT_ID"
+output_dir_template: "results/checkpoints/planner_sft_7b/{experiment_id}"
+cost_stats_placeholder: true
+notes: "仅在 schema 与数据稳定后于 A100 启用；运行前设置 EXPERIMENT_ID 并保留 config 快照 + metrics.json + summary.md。"

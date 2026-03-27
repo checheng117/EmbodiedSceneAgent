@@ -1,0 +1,59 @@
+{
+  "schema_version": "esa_sm/v1",
+  "frame_id": "0",
+  "timestamp_s": null,
+  "source": "example",
+  "objects": {
+    "table": {
+      "object_id": "table",
+      "name": "table",
+      "class_name": "table",
+      "category": "support_surface",
+      "aliases": ["table_top"],
+      "position": [0.5, 0.0, 0.0],
+      "bbox": null,
+      "oriented_bbox": null,
+      "state_tags": ["static"],
+      "visibility": 1.0,
+      "confidence": 1.0,
+      "metadata": {}
+    },
+    "drawer": {
+      "object_id": "drawer",
+      "name": "drawer",
+      "class_name": "slider",
+      "category": "slider",
+      "aliases": [],
+      "position": [0.6, 0.0, 0.35],
+      "bbox": null,
+      "oriented_bbox": null,
+      "state_tags": ["closed"],
+      "visibility": 1.0,
+      "confidence": 1.0,
+      "metadata": {}
+    },
+    "red_block": {
+      "object_id": "red_block",
+      "name": "red block",
+      "class_name": "block",
+      "category": "block",
+      "aliases": [],
+      "position": [0.45, 0.0, 0.12],
+      "bbox": null,
+      "oriented_bbox": null,
+      "state_tags": ["on_table"],
+      "visibility": 1.0,
+      "confidence": 1.0,
+      "metadata": {}
+    }
+  },
+  "relations": [
+    {
+      "subject_id": "red_block",
+      "object_id": "table",
+      "relation": "on",
+      "confidence": 1.0
+    }
+  ],
+  "extra": {}
+}

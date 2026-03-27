@@ -1,0 +1,11 @@
+# A100 80G：7B planner 正式实验与批量 rollout（模板；未运行不得填 metrics）
+device: a100_80g
+experiment_id: "${EXPERIMENT_ID}"  # 运行前导出为实际 id，并写入 results/experiments/<id>/
+planner_config: configs/planner/qwen25vl_7b_lora.yaml
+config_snapshot_dest: results/experiments/<experiment_id>/config.snapshot.yaml
+metrics_json_dest: results/experiments/<experiment_id>/metrics.json
+summary_md_dest: results/experiments/<experiment_id>/summary.md
+cost_stats_json_dest: results/experiments/<experiment_id>/cost_stats.json
+batch_rollouts: 64
+seeds: [0, 1, 2]
+notes: "对外报告数字必须来自本配置下的可复现运行与 experiment_id；占位路径仅说明落盘契约。"

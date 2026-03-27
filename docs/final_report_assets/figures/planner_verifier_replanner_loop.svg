@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200">
+  <rect width="100%" height="100%" fill="#fafafa" stroke="#ccc"/>
+  <text x="20" y="32" font-family="sans-serif" font-size="17" font-weight="bold" fill="#111">Closed loop</text>
+  <text font-family="monospace" font-size="12" fill="#333">
+    <tspan x="20" y="58">PlannerOutput (JSON contract) → SkillExecutor</tspan>
+    <tspan x="20" y="78">→ StateDiffVerifier → FailureType</tspan>
+    <tspan x="20" y="98">→ RuleReplanner / Hybrid LLM (validated JSON) → next step</tspan>
+  </text>
+</svg>

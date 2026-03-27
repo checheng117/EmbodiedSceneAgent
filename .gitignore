@@ -1,0 +1,65 @@
+# Secrets / local env (never commit tokens)
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Local venv (conda is primary; see environment.yml)
+.venv/
+venv/
+
+# Hugging Face / local model caches (large)
+.hf_cache/
+
+# Weight files
+*.pt
+*.bin
+*.safetensors
+
+# Jupyter / IDE / OS noise
+.ipynb_checkpoints/
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# --- Upstream CALVIN trees + datasets (clone locally; never commit)
+data/raw/**
+!data/raw/.gitkeep
+
+# Large planner SFT JSONL (rebuild via scripts or rsync from dev machine)
+data/processed/**/*.jsonl
+
+# --- results: heavy or machine-local (explicit ignores; see exceptions below)
+/results/archive/
+/results/checkpoints/
+/results/demos/
+/results/episode_logs/
+/results/experiments/
+/results/logs/
+/results/calvin_live_probe_summary.json
+/results/v0_mock_summary.json
+
+# Under eval/: only keep small proxy metrics text (optional for GitHub narrative)
+/results/eval/*
+!/results/eval/planner_base_vs_tuned/
+/results/eval/planner_base_vs_tuned/*
+!/results/eval/planner_base_vs_tuned/metrics.json
+!/results/eval/planner_base_vs_tuned/summary.md
+
+# Light report + RLBench smoke JSON (safe to version)
+!/results/.gitkeep
+!/results/reports/
+!/results/reports/**
+!/results/final_report_assets/
+!/results/final_report_assets/**
+!/results/rlbench_dev_smoke.json
+!/results/rlbench_stack_diagnosis.json

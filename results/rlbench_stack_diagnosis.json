@@ -1,0 +1,83 @@
+{
+  "generated_utc": "2026-03-27T14:21:06.226655+00:00",
+  "python_executable": "(set on target machine; see `which python`)",
+  "python_version": "3.13.5",
+  "conda_default_env": "base",
+  "conda_prefix": "(conda env prefix on target machine)",
+  "virtual_env": "",
+  "pip_distribution_probe": {
+    "rlbench": {
+      "present": false,
+      "version": null
+    },
+    "pyrep": {
+      "present": false,
+      "version": null
+    }
+  },
+  "environment": {
+    "COPPELIASIM_ROOT": "",
+    "LD_LIBRARY_PATH_set": true,
+    "LD_LIBRARY_PATH_head": "(host-specific; omitted in committed snapshot)"
+  },
+  "import_status": {
+    "rlbench": {
+      "ok": false,
+      "message": "rlbench not available: No module named 'rlbench'"
+    },
+    "pyrep": {
+      "ok": false,
+      "message": "pyrep not available: No module named 'pyrep'"
+    }
+  },
+  "layers": {
+    "1_import_rlbench": {
+      "ok": false,
+      "message": "rlbench not available: No module named 'rlbench'"
+    },
+    "1b_import_pyrep": {
+      "ok": false,
+      "message": "pyrep not available: No module named 'pyrep'"
+    },
+    "2_simulator_locate": {
+      "ok": false,
+      "COPPELIASIM_ROOT": "",
+      "LD_LIBRARY_PATH_set": true,
+      "LD_LIBRARY_PATH_head": "(host-specific; omitted in committed snapshot)",
+      "notes": "COPPELIASIM_ROOT unset"
+    },
+    "3_env_construct": {
+      "attempted": false,
+      "ok": null,
+      "message": "see sim_env_create smoke"
+    },
+    "4_task_reset": {
+      "attempted": false,
+      "ok": null,
+      "message": "see sim_reset smoke"
+    },
+    "5_observation_capture": {
+      "attempted": false,
+      "ok": null,
+      "message": "see sim_reset smoke"
+    },
+    "6_scene_memory_mapping": {
+      "ok": true,
+      "message": "observation_like_dict_to_scene_memory always available (fixture or live dict)"
+    }
+  },
+  "env_create_probe": {
+    "attempted": false,
+    "ok": null,
+    "message": "",
+    "meta": {}
+  },
+  "reset_probe": {
+    "attempted": false,
+    "ok": null,
+    "message": "",
+    "meta": {}
+  },
+  "deepest_reached_stage": "import_fail",
+  "blocker_summary": "rlbench import blocked: rlbench not available: No module named 'rlbench'"
+}

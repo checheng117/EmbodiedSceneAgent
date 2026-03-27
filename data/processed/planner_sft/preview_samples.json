@@ -1,0 +1,50 @@
+[
+  {
+    "split": "train",
+    "sample_id": "train_pool::open_drawer::5::step0::b54c0233",
+    "trajectory_type": "normal",
+    "instruction": "go open the drawer",
+    "user_prompt_head": "You are a structured manipulation planner. Use only the listed skills.\nAvailable tools (JSON):\n[\n  {\n    \"name\": \"reach\",\n    \"description\": \"Move end-effector toward a target object (non-grasping approach).\"\n  },\n  {\n    \"name\": \"grasp\",\n    \"description\": \"Grasp / pick up the target object.\"\n  },\n  {\n    \"name\": \"place\",\n    \"description\": \"Place the held object at the target (e.g. drawer).\"\n  }",
+    "target_text_head": "Plan:\nTask: open_drawer\nSubgoal: Open the drawer fully.\nTarget: drawer\nSkill: open\nSuccess_Check: drawer has state tag 'open'\nFallback: reach handle from the right\n"
+  },
+  {
+    "split": "train",
+    "sample_id": "train_pool::open_drawer::5::step1::ee004638",
+    "trajectory_type": "multi_step",
+    "instruction": "go open the drawer",
+    "user_prompt_head": "You are a structured manipulation planner. Use only the listed skills.\nAvailable tools (JSON):\n[\n  {\n    \"name\": \"reach\",\n    \"description\": \"Move end-effector toward a target object (non-grasping approach).\"\n  },\n  {\n    \"name\": \"grasp\",\n    \"description\": \"Grasp / pick up the target object.\"\n  },\n  {\n    \"name\": \"place\",\n    \"description\": \"Place the held object at the target (e.g. drawer).\"\n  }",
+    "target_text_head": "Plan:\nTask: noop\nSubgoal: No further object-centric steps.\nTarget: table\nSkill: reach\nSuccess_Check: idle\nFallback: \n"
+  },
+  {
+    "split": "val",
+    "sample_id": "validation_pool::move_slider_left::0::step0::f79fb556",
+    "trajectory_type": "normal",
+    "instruction": "push the sliding door to the left side",
+    "user_prompt_head": "You are a structured manipulation planner. Use only the listed skills.\nAvailable tools (JSON):\n[\n  {\n    \"name\": \"reach\",\n    \"description\": \"Move end-effector toward a target object (non-grasping approach).\"\n  },\n  {\n    \"name\": \"grasp\",\n    \"description\": \"Grasp / pick up the target object.\"\n  },\n  {\n    \"name\": \"place\",\n    \"description\": \"Place the held object at the target (e.g. drawer).\"\n  }",
+    "target_text_head": "Plan:\nTask: open_drawer\nSubgoal: Open the drawer.\nTarget: drawer\nSkill: open\nSuccess_Check: drawer has state tag 'open'\nFallback: try alternate approach vector\n"
+  },
+  {
+    "split": "val",
+    "sample_id": "validation_pool::move_slider_left::0::step1::31609d78",
+    "trajectory_type": "multi_step",
+    "instruction": "push the sliding door to the left side",
+    "user_prompt_head": "You are a structured manipulation planner. Use only the listed skills.\nAvailable tools (JSON):\n[\n  {\n    \"name\": \"reach\",\n    \"description\": \"Move end-effector toward a target object (non-grasping approach).\"\n  },\n  {\n    \"name\": \"grasp\",\n    \"description\": \"Grasp / pick up the target object.\"\n  },\n  {\n    \"name\": \"place\",\n    \"description\": \"Place the held object at the target (e.g. drawer).\"\n  }",
+    "target_text_head": "Plan:\nTask: noop\nSubgoal: No further object-centric steps.\nTarget: table\nSkill: reach\nSuccess_Check: idle\nFallback: \n"
+  },
+  {
+    "split": "test",
+    "sample_id": "validation_pool::lift_red_block_drawer::0::step0::ac147183",
+    "trajectory_type": "normal",
+    "instruction": "Take the red block from the drawer",
+    "user_prompt_head": "You are a structured manipulation planner. Use only the listed skills.\nAvailable tools (JSON):\n[\n  {\n    \"name\": \"reach\",\n    \"description\": \"Move end-effector toward a target object (non-grasping approach).\"\n  },\n  {\n    \"name\": \"grasp\",\n    \"description\": \"Grasp / pick up the target object.\"\n  },\n  {\n    \"name\": \"place\",\n    \"description\": \"Place the held object at the target (e.g. drawer).\"\n  }",
+    "target_text_head": "Plan:\nTask: open_drawer\nSubgoal: Open the drawer fully.\nTarget: drawer\nSkill: open\nSuccess_Check: drawer has state tag 'open'\nFallback: reach handle from the right\n"
+  },
+  {
+    "split": "test",
+    "sample_id": "validation_pool::lift_red_block_drawer::0::step1::5b0d4126",
+    "trajectory_type": "multi_step",
+    "instruction": "Take the red block from the drawer",
+    "user_prompt_head": "You are a structured manipulation planner. Use only the listed skills.\nAvailable tools (JSON):\n[\n  {\n    \"name\": \"reach\",\n    \"description\": \"Move end-effector toward a target object (non-grasping approach).\"\n  },\n  {\n    \"name\": \"grasp\",\n    \"description\": \"Grasp / pick up the target object.\"\n  },\n  {\n    \"name\": \"place\",\n    \"description\": \"Place the held object at the target (e.g. drawer).\"\n  }",
+    "target_text_head": "Plan:\nTask: grasp_block\nSubgoal: Grasp the red block.\nTarget: red_block\nSkill: grasp\nSuccess_Check: red_block has state tag 'held'\nFallback: realign gripper above block\n"
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "n": 73,
+  "format_compliance_rate_base": 1.0,
+  "format_compliance_rate_tuned": 1.0,
+  "tool_use_accuracy_base": 0.0821917808219178,
+  "tool_use_accuracy_tuned": 0.2191780821917808,
+  "target_match_rate_base": 0.3287671232876712,
+  "target_match_rate_tuned": 0.4794520547945205,
+  "task_completion_rate_base": 0.0684931506849315,
+  "task_completion_rate_tuned": 0.2054794520547945,
+  "error_recovery_rate_tuned": 0.0,
+  "recovery_eval_rows": 8,
+  "notes": "tool_use_accuracy compares final Skill: line to reference JSONL target_text; target_match_rate is an action-target string proxy (last Target: line). task_completion_rate is a strict proxy: format_compliance AND tool_skill_match AND target_match. error_recovery_rate_tuned is recovery_style_ok rate on rows with trajectory_type==recovery only; not CALVIN env success."
+}
