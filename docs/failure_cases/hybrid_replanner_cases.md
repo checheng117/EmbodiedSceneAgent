@@ -1,39 +1,49 @@
-# Hybrid replanner — curated cases (auto)
+# Hybrid replanner — side-by-side case studies (Assignment 3)
 
-_**Fixture / mock batch** — 非官方 benchmark。JSON 见 `results/demos/hybrid_replanner_cases/`。_
+_来源限定为仓库真实产物；CALVIN debug vector-teacher 轨道仅用于课程作业诊断，不是官方 leaderboard。_
 
-## 1) LLM replan 后任务恢复
-- 文件：[`case_llm_repair_success.json`](../../results/demos/hybrid_replanner_cases/case_llm_repair_success.json)
-- 本 batch 内命中：见 JSON `source=eval_batch`。
+## Tiny 3-case shared setup
 
-## 2) Parse / 校验失败 → 规则回退
-- 文件：[`case_parse_fallback.json`](../../results/demos/hybrid_replanner_cases/case_parse_fallback.json)
-- 本 batch 未命中 parse 回退（可能全部解析成功或未调用 LLM）。
+- backend=`calvin_debug_real`
+- batch=`grouped_sequence`
+- episodes=`3`
+- seed=`42`
+- verifier_mode=`verifier_plus_replan`
+- replanner_mode=`hybrid`
 
-## 3) LLM 计划通过校验但后续 verification_replan 仍失败
-- 文件：[`case_validated_repair_failed.json`](../../results/demos/hybrid_replanner_cases/case_validated_repair_failed.json)
-- 本 batch 内命中该组合。
+Run roots:
+- baseline: `results/experiments/hybrid_replanner_eval/hybrid_calvin_debug_real_aligned_20260331T103029Z`
+- VL-3B: `results/experiments/hybrid_replanner_eval/hybrid_calvin_debug_real_aligned_3b_qual_pilot_rerun`
+- VL-7B: `results/experiments/hybrid_replanner_eval/hybrid_calvin_debug_real_aligned_7b_qual_pilot_rerun`
 
-## CALVIN debug real-data backed hybrid (not benchmark)
+## Case 1 — baseline bad-plan rejected before execution
 
-_下列分节对应不同 `CALVIN_DEBUG_BATCH` / `--calvin-debug-batch`，互不覆盖。_
+- episode id: `episode_0358502.npz` (run row `episode_index=1`)
+- revised-plan evidence (raw head): `{"task":"move_to","subgoal":"place_blue_block_in_drawer","target_object":"table","skill":"place","success_check":null,...}`
+- semantic acceptance outcome: rejected (`drawer_goal_target_mismatch`)
+- interpretation: 计划文本提“drawer”，但目标却落到 `table`，属于语义 grounding 错位；系统在 semantic acceptance 阶段拦截，避免直接执行错误计划。
+- one-sentence takeaway: 基线并非 parse 崩溃，而是“可解析但语义不成立”的修订计划被稳定拒绝。
 
-## Hybrid CALVIN debug — grouped_sequence (aligned)
+## Case 2 — VL-3B accepted-plan example
 
-_官方 debug ``*.npz`` 向量 teacher + hybrid replanner；**非** leaderboard；来源 **`calvin_debug_real_aligned`**（batch=`grouped_sequence`）。_
+- episode id: `episode_0358522.npz` (run row `episode_index=2`)
+- revised-plan evidence (raw head): `{"task":"grasp","subgoal":"grasp the pink block","target_object":"red_block","skill":"grasp","success_check":"red_block.is_grasped",...}`
+- semantic acceptance outcome: accepted (`revised_plan_accepted=true`, fallback stage=`validated`)
+- interpretation: 目标对象与场景记忆一致（`red_block` 可见），semantic gate 放行；后续失败主要来自 repeated no-effect，属于执行有效性问题。
+- one-sentence takeaway: VL-3B 在 tiny 集合上提供了最稳定的“语义可接受修订计划”证据（3/3）。
 
-### A) 最近似成功（LLM 校验修订）
-- [`case_calvin_debug_real_aligned_hybrid_success.json`](../../results/demos/hybrid_replanner_cases/case_calvin_debug_real_aligned_hybrid_success.json)
+## Case 3 — VL-7B partially degraded case
 
-### B) Fallback（解析失败）
-- [`case_calvin_debug_real_aligned_hybrid_fallback.json`](../../results/demos/hybrid_replanner_cases/case_calvin_debug_real_aligned_hybrid_fallback.json)
+- episode id: `episode_0358502.npz` (run row `episode_index=1`)
+- revised-plan evidence (raw head): `{"task":"lift_blue_block","subgoal":"grasp_blue_block","target_object":"blue_block","skill":"grasp",...}`
+- semantic acceptance outcome: rejected (`target_absent_from_scene_memory`)
+- interpretation: 计划尝试抓取 `blue_block`，但当前 scene memory 仅含 `drawer/red_block/table`，因此被 semantic gate 拒绝。
+- one-sentence takeaway: VL-7B 在 tiny 集合可运行但出现 1/3 语义拒绝，不应被表述为优于 VL-3B。
 
-## Hybrid CALVIN debug — same_task_subset
+## Tiny comparison conclusion (fixed 3-case)
 
-_官方 debug ``*.npz`` 向量 teacher + hybrid replanner；**非** leaderboard；来源 **`calvin_debug_same_task`**（batch=`same_task_subset`）。_
-
-### A) 最近似成功（LLM 校验修订）
-- [`case_calvin_debug_same_task_hybrid_success.json`](../../results/demos/hybrid_replanner_cases/case_calvin_debug_same_task_hybrid_success.json)
-
-### B) Fallback（解析失败）
-- [`case_calvin_debug_same_task_hybrid_fallback.json`](../../results/demos/hybrid_replanner_cases/case_calvin_debug_same_task_hybrid_fallback.json)
+| Track | Accepted revised plans | Main rejection pattern | Terminal failure label |
+|------|---:|------|------|
+| Stable baseline | 0/3 | `target_absent_from_scene_memory` (2), `drawer_goal_target_mismatch` (1) | `repeated_no_effect_fallback_exhausted` |
+| Qwen2.5-VL-3B | 3/3 | none | `repeated_no_effect_fallback_exhausted` |
+| Qwen2.5-VL-7B | 2/3 | `target_absent_from_scene_memory` (1) | `repeated_no_effect_fallback_exhausted` |

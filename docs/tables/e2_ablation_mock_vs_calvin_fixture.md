@@ -8,17 +8,17 @@ _**Fixture / dev batch only** — not official CALVIN ablation or leaderboard._
 | `none` | failure_detected_rate | 0.0 | 0.0 | yes |
 | `none` | replan_trigger_rate | 0.0 | 0.0 | yes |
 | `none` | recovery_success_rate | 0.0 | 0.0 | yes |
-| `none` | average_steps | 4.125 | 2.25 | no |
+| `none` | average_steps | 4.0 | 2.3333333333333335 | no |
 | `verifier_only` | task_completion_rate | 1.0 | 1.0 | yes |
-| `verifier_only` | failure_detected_rate | 0.2727272727272727 | 0.0 | no |
+| `verifier_only` | failure_detected_rate | 0.25 | 0.0 | no |
 | `verifier_only` | replan_trigger_rate | 0.0 | 0.0 | yes |
 | `verifier_only` | recovery_success_rate | 0.0 | 0.0 | yes |
-| `verifier_only` | average_steps | 4.125 | 2.25 | no |
+| `verifier_only` | average_steps | 4.0 | 2.3333333333333335 | no |
 | `verifier_plus_replan` | task_completion_rate | 1.0 | 1.0 | yes |
-| `verifier_plus_replan` | failure_detected_rate | 0.2222222222222222 | 0.0 | no |
-| `verifier_plus_replan` | replan_trigger_rate | 0.75 | 0.0 | no |
-| `verifier_plus_replan` | recovery_success_rate | 0.75 | 0.0 | no |
-| `verifier_plus_replan` | average_steps | 3.375 | 2.25 | no |
+| `verifier_plus_replan` | failure_detected_rate | 0.2 | 0.0 | no |
+| `verifier_plus_replan` | replan_trigger_rate | 0.6666666666666666 | 0.0 | no |
+| `verifier_plus_replan` | recovery_success_rate | 0.6666666666666666 | 0.0 | no |
+| `verifier_plus_replan` | average_steps | 3.3333333333333335 | 2.3333333333333335 | no |
 
 ## Interpretation (honest)
 
@@ -32,5 +32,5 @@ _**Fixture / dev batch only** — not official CALVIN ablation or leaderboard._
 - **CALVIN fixture** 更接近 **adapter reality**：观测与 teacher 字段来自与 CALVIN 同形的 JSON fixture + 最小闭环，能暴露解析与状态同步上的边角，但仍是 **fixture/smoke**，不是官方 CALVIN 排行榜。
 - **仅在符号层成立的结论**：例如 mock 上精确的步数对比、某些 `failure_taxonomy` 计数比例；换到 fixture 后应视为「趋势一致 /  wiring 一致」而非数值 1:1 推广。
 
-- Mock artifact: `results/experiments/e2_ablation/e2_mock_20260325T090753Z`
-- CALVIN fixture artifact: `results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z`
+- Mock artifact: `/home/cc/Project/CC/EmbodiedSceneAgent/results/experiments/e2_ablation/e2_mock_20260331T083930Z`
+- CALVIN fixture artifact: `/home/cc/Project/CC/EmbodiedSceneAgent/results/experiments/e2_ablation/e2_calvin_fixture_20260331T084742Z`

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-03-27T14:22:34.106866+00:00",
+  "generated_utc": "2026-03-31T11:48:18.060651+00:00",
   "strongest_real_result": {
     "name": "planner JSONL proxy (base vs tuned)",
     "path": "results/eval/planner_base_vs_tuned/metrics.json",
@@ -13,54 +13,56 @@
     },
     {
       "name": "E2 ablation on mock (symbolic)",
-      "path": "results/experiments/e2_ablation/e2_mock_20260325T090753Z",
+      "path": "results/experiments/e2_ablation/e2_mock_20260331T083930Z",
       "note": "no_verifier vs verifier_only vs verifier_plus_replan — not official CALVIN."
     },
     {
       "name": "E2 ablation on CALVIN fixture batch",
-      "path": "results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z",
+      "path": "results/experiments/e2_ablation/e2_calvin_fixture_20260331T084742Z",
       "note": "Fixture minimal loop — **not** official CALVIN ablation."
     },
     {
       "name": "E2 ablation on CALVIN official debug npz (vector teacher)",
-      "path": "results/experiments/e2_ablation/e2_doc_refresh_same_task",
+      "path": "results/experiments/e2_ablation/e2_calvin_debug_real_aligned_20260331T084633Z",
       "note": "Official debug dataset vectors + symbolic minimal loop — **not** leaderboard."
     }
   ],
   "strongest_hybrid_result": {
     "kind": "eval_batch",
     "metrics_headline": {
-      "replan_parse_success_rate": 1.0,
-      "validated_revision_rate": 1.0,
-      "fallback_rate": 0.0,
+      "replan_parse_success_rate": 0.0,
+      "validated_revision_rate": 0.0,
+      "fallback_rate": 1.0,
       "repair_success_rate": 1.0,
-      "unknown_failure_rate": 0.6153846153846154,
-      "unknown_skill_rate": null,
-      "alias_normalization_count": null,
-      "invalid_skill_count": null
+      "unknown_failure_rate": 0.6,
+      "unknown_skill_rate": 0.0,
+      "alias_normalization_count": 0,
+      "invalid_skill_count": 0
     },
     "case_path": "results/demos/hybrid_replanner_cases/case_llm_repair_success.json",
-    "parse_error_kind_counts": {},
-    "parse_breakdown_empty_reason": "Latest hybrid replanner eval batch had no LLM parse failures; all audited calls reached `fallback_stage=validated`. Breakdown counts are therefore empty — not a claim of infinite robustness."
+    "parse_error_kind_counts": {
+      "missing_required_keys": 3
+    },
+    "parse_breakdown_empty_reason": null
   },
   "e2_best_story": {
     "mock_status": "available",
-    "mock_latest_dir": "results/experiments/e2_ablation/e2_mock_20260325T090753Z",
+    "mock_latest_dir": "results/experiments/e2_ablation/e2_mock_20260331T083930Z",
     "calvin_fixture_status": "available",
-    "calvin_latest_dir": "results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z",
+    "calvin_latest_dir": "results/experiments/e2_ablation/e2_calvin_fixture_20260331T084742Z",
     "calvin_debug_real_status": "available",
-    "calvin_debug_real_latest_dir": "results/experiments/e2_ablation/e2_doc_refresh_same_task",
+    "calvin_debug_real_latest_dir": "results/experiments/e2_ablation/e2_calvin_debug_real_aligned_20260331T084633Z",
     "mock_verifier_plus_replan_task_completion_rate": 1.0,
-    "mock_verifier_plus_replan_recovery_success_rate": 0.75,
-    "one_line": "E2 mock (symbolic): latest batch shows verifier_plus_replan task_completion=1.0, recovery_success_rate=0.75 — **fixture/smoke**, not official CALVIN.",
+    "mock_verifier_plus_replan_recovery_success_rate": 0.6666666666666666,
+    "one_line": "E2 mock (symbolic): latest batch shows verifier_plus_replan task_completion=1.0, recovery_success_rate=0.6666666666666666 — **fixture/smoke**, not official CALVIN.",
     "calvin_debug_real_note": "E2 on official CALVIN **debug** vectors: status `available` — **not** leaderboard."
   },
   "hybrid_calvin_debug_real_headline": {
-    "replan_parse_success_rate": 0.5,
-    "validated_revision_rate": 0.5,
-    "fallback_rate": 0.5,
+    "replan_parse_success_rate": 1.0,
+    "validated_revision_rate": 1.0,
+    "fallback_rate": 0.0,
     "repair_success_rate": 0.0,
-    "unknown_failure_rate": 0.1,
+    "unknown_failure_rate": 0.375,
     "unknown_skill_rate": 0.0,
     "alias_normalization_count": 0,
     "invalid_skill_count": 0
@@ -77,4 +79,21 @@
     "RLBench Python import: false on this machine — using fixture bridge for cognition smoke."
   ],
   "smoke_vs_future_note": "RLBench: **real** = fixture→memory→planner smoke; **sim_reset** = only if CoppeliaSim stack OK. Official CALVIN/RLBench leaderboards: **future_only**. A100 7B / VLABench: **future_only**."
+  ,
+  "assignment3_headline": {
+    "base_vs_tuned_proxy": {
+      "source": "results/eval/planner_base_vs_tuned/metrics.json",
+      "n": 73,
+      "format_compliance": "1.000 -> 1.000",
+      "tool_use_accuracy": "0.082 -> 0.219",
+      "target_match_rate": "0.329 -> 0.479",
+      "strict_task_proxy": "0.068 -> 0.205"
+    },
+    "tiny_3case_qualitative": {
+      "stable_baseline_accepted_revised_plans": "0/3",
+      "qwen2_5_vl_3b_accepted_revised_plans": "3/3",
+      "qwen2_5_vl_7b_accepted_revised_plans": "2/3",
+      "note": "VL-3B is strongest secondary qualitative track; VL-7B is runnable but not superior on this tiny set."
+    }
+  }
 }

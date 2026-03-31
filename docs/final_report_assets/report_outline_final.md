@@ -1,6 +1,6 @@
 # Final report outline (blueprint-aligned)
 
-_Generated: `2026-03-27T14:22:34.108702+00:00`_ · Source sketch: `docs/report_outline.md`
+_Generated: `2026-03-31T11:48:18.062923+00:00`_ · Source sketch: `docs/report_outline.md`
 
 Each section lists: **Evidence paths** · **Strongest defensible statement** · **Explicit boundary / gap**.
 
@@ -55,13 +55,13 @@ Each section lists: **Evidence paths** · **Strongest defensible statement** · 
 ## 9. E2 Ablation
 
 - **Evidence:** `results/experiments/e2_ablation/`; `docs/tables/e2_ablation_mock_vs_calvin_fixture.md`; `docs/failure_cases/e2_ablation_cases.md`.
-- **Strongest:** E2 mock (symbolic): latest batch shows verifier_plus_replan task_completion=1.0, recovery_success_rate=0.75 — **fixture/smoke**, not official CALVIN.
+- **Strongest:** E2 mock (symbolic): latest batch shows verifier_plus_replan task_completion=1.0, recovery_success_rate=0.6666666666666666 — **fixture/smoke**, not official CALVIN.
 - **Gap:** E2 is symbolic + fixture — not CALVIN challenge split.
 
 ## 10. Hybrid Replanner Analysis
 
 - **Evidence:** `docs/replanner_hybrid_results.md`; latest eval dir under `results/experiments/hybrid_replanner_eval/`.
-- **Strongest:** {"replan_parse_success_rate": 1.0, "validated_revision_rate": 1.0, "fallback_rate": 0.0, "repair_success_rate": 1.0, "unknown_failure_rate": 0.6153846153846154, "unknown_skill_rate": null, "alias_normalization_count": null, "invalid_skill_count": null}
+- **Strongest:** {"replan_parse_success_rate": 0.0, "validated_revision_rate": 0.0, "fallback_rate": 1.0, "repair_success_rate": 1.0, "unknown_failure_rate": 0.6, "unknown_skill_rate": 0.0, "alias_normalization_count": 0, "invalid_skill_count": 0}
 - **Gap:** `parse_error_kind_counts` empty in latest batch = **high success**, not proof of zero failures forever.
 
 ## 11. RLBench Bridge Status

@@ -30,6 +30,7 @@ from embodied_scene_agent.perception.calvin_debug_vector_teacher import (
 )
 from embodied_scene_agent.pipeline.run_calvin_minimal_loop import run_calvin_minimal_episode
 from embodied_scene_agent.pipeline.v0_loop import EpisodeTrace, VerifierMode, run_v0_episode
+from embodied_scene_agent.utils.experiment import normalize_experiment_id, write_run_artifacts
 from embodied_scene_agent.utils.paths import repo_root
 
 Backend = Literal["mock", "calvin_fixture", "calvin_debug_real"]
@@ -264,19 +265,22 @@ def run_all_modes(
     replanner_mode: str = "rule",
     backend: Backend = "mock",
     calvin_debug_batch: CalvinDebugBatch | None = None,
+    n_episodes: int = 16,
+    seed: int = 42,
+    max_steps: int = 12,
 ) -> dict:
     modes: list[VerifierMode] = ["none", "verifier_only", "verifier_plus_replan"]
     if backend == "mock":
-        scenarios = list(scenario_grid())
+        scenarios = list(scenario_grid())[: max(1, n_episodes)]
         setting_note = "MockEmbodiedEnv symbolic — not official CALVIN benchmark."
     elif backend == "calvin_fixture":
-        scenarios = list(calvin_fixture_scenario_grid())
+        scenarios = list(calvin_fixture_scenario_grid())[: max(1, n_episodes)]
         setting_note = (
             "CALVIN **fixture** minimal loop (``run_calvin_minimal_episode``) — not official CALVIN benchmark."
         )
     else:
         cdb: CalvinDebugBatch = calvin_debug_batch or "grouped_sequence"
-        scenarios = calvin_debug_real_scenario_list(n_episodes=16, seed=42, batch=cdb)
+        scenarios = calvin_debug_real_scenario_list(n_episodes=n_episodes, seed=seed, batch=cdb)
         setting_note = (
             "CALVIN **official debug** ``*.npz`` vectors → vector teacher → minimal loop (symbolic skills) — "
             f"batch=`{cdb}` (same-task-like when applicable) — not official CALVIN benchmark."
@@ -297,7 +301,7 @@ def run_all_modes(
             if backend == "mock":
                 tr = run_v0_episode(
                     s["instruction"],
-                    max_steps=12,
+                    max_steps=max_steps,
                     forced_grasp_failures=s["forced_grasp_failures"],
                     verifier_mode=mode,
                     replanner_mode=replanner_mode,  # type: ignore[arg-type]
@@ -306,7 +310,7 @@ def run_all_modes(
             else:
                 tr = run_calvin_minimal_episode(
                     s["instruction"],
-                    max_steps=12,
+                    max_steps=max_steps,
                     initial_observation=s["initial_observation"],
                     verifier_mode=mode,
                     replanner_mode=replanner_mode,  # type: ignore[arg-type]
@@ -829,28 +833,38 @@ def pick_calvin_cases(root: Path, payload: dict) -> None:
     unified = root / "results" / "demos" / "e2_ablation_cases"
     unified.mkdir(parents=True, exist_ok=True)
     per = payload["per_episode_by_mode"]
+    available_indices = {
+        int(r["episode_index"])
+        for rows in per.values()
+        for r in rows
+        if "episode_index" in r
+    }
     scenarios = list(calvin_fixture_scenario_grid())
-    by_idx = {s["episode_index"]: s for s in scenarios}
+    by_idx = {s["episode_index"]: s for s in scenarios if s["episode_index"] in available_indices}
+    vo_by_idx = {int(r["episode_index"]): r for r in per["verifier_only"]}
+    vpr_by_idx = {int(r["episode_index"]): r for r in per["verifier_plus_replan"]}
 
     candidate_idx: int | None = None
     for r in sorted(per["verifier_only"], key=lambda x: x["episode_index"]):
         idx = r["episode_index"]
         vo = r
-        vpr = next(x for x in per["verifier_plus_replan"] if x["episode_index"] == idx)
+        vpr = vpr_by_idx.get(int(idx))
+        if vpr is None:
+            continue
         if not vo["success"] and vpr["success"] and vpr.get("replan_count", 0) > 0:
             candidate_idx = idx
             break
     if candidate_idx is None:
         for idx in CALVIN_E2_SCENARIO_WHITELIST:
-            if idx not in by_idx:
+            if idx not in by_idx or idx not in vo_by_idx or idx not in vpr_by_idx:
                 continue
-            vo = next(x for x in per["verifier_only"] if x["episode_index"] == idx)
-            vpr = next(x for x in per["verifier_plus_replan"] if x["episode_index"] == idx)
+            vo = vo_by_idx[idx]
+            vpr = vpr_by_idx[idx]
             if not vo["success"] and vpr["success"]:
                 candidate_idx = idx
                 break
     if candidate_idx is None:
-        candidate_idx = int(CALVIN_E2_SCENARIO_WHITELIST[0])
+        candidate_idx = min(by_idx) if by_idx else 0
 
     repair_fail_idx = None
     for r in sorted(per["verifier_plus_replan"], key=lambda x: x["episode_index"]):
@@ -860,7 +874,7 @@ def pick_calvin_cases(root: Path, payload: dict) -> None:
     if repair_fail_idx is None:
         repair_fail_idx = next(
             (r["episode_index"] for r in per["verifier_plus_replan"] if not r["success"]),
-            int(CALVIN_E2_SCENARIO_WHITELIST[-1]),
+            candidate_idx,
         )
 
     cal_sel = {
@@ -1018,24 +1032,26 @@ def main() -> None:
         type=str,
         default="",
     )
+    parser.add_argument("--episodes", type=int, default=16)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--max-steps", type=int, default=12)
+    parser.add_argument("--replanner-mode", type=str, choices=["rule", "hybrid"], default="rule")
     args, _ = parser.parse_known_args()
     root = args.root or repo_root()
     backend: Backend = args.backend  # type: ignore[assignment]
-    if args.experiment_id:
-        eid = args.experiment_id
-    elif backend == "calvin_fixture":
-        eid = datetime.now(timezone.utc).strftime("e2_calvin_fixture_%Y%m%dT%H%M%SZ")
+    if backend == "calvin_fixture":
+        prefix = "e2_calvin_fixture"
     elif backend == "calvin_debug_real":
-        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         b = args.calvin_debug_batch
         if b == "grouped_sequence":
-            eid = f"e2_calvin_debug_real_aligned_{ts}"
+            prefix = "e2_calvin_debug_real_aligned"
         elif b == "same_task_subset":
-            eid = f"e2_calvin_debug_same_task_{ts}"
+            prefix = "e2_calvin_debug_same_task"
         else:
-            eid = f"e2_calvin_debug_real_{ts}"
+            prefix = "e2_calvin_debug_real"
     else:
-        eid = datetime.now(timezone.utc).strftime("e2_mock_%Y%m%dT%H%M%SZ")
+        prefix = "e2_mock"
+    eid = normalize_experiment_id(prefix=prefix, explicit_id=args.experiment_id)
 
     out_dir = root / "results" / "experiments" / "e2_ablation" / eid
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1043,11 +1059,33 @@ def main() -> None:
     cdb = args.calvin_debug_batch if backend == "calvin_debug_real" else None
     payload = run_all_modes(
         experiment_id=eid,
-        replanner_mode="rule",
+        replanner_mode=args.replanner_mode,
         backend=backend,
         calvin_debug_batch=cdb,  # type: ignore[arg-type]
+        n_episodes=max(1, int(args.episodes)),
+        seed=args.seed,
+        max_steps=max(1, int(args.max_steps)),
     )
     payload["generated_utc"] = datetime.now(timezone.utc).isoformat()
+    payload["run_artifacts"] = write_run_artifacts(
+        out_dir,
+        root=root,
+        experiment_id=eid,
+        entrypoint="python -m embodied_scene_agent.evaluation.run_ablation_e2",
+        config_snapshot={
+            "backend": backend,
+            "calvin_debug_batch": cdb,
+            "n_episodes": max(1, int(args.episodes)),
+            "seed": args.seed,
+            "max_steps": max(1, int(args.max_steps)),
+            "replanner_mode": args.replanner_mode,
+            "verifier_modes": list(payload["modes"].keys()),
+        },
+        notes=[
+            "Formal E2 artifacts require config snapshot + run manifest under the 3090-only roadmap.",
+            "Not an official CALVIN benchmark run.",
+        ],
+    )
 
     (out_dir / "metrics.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"

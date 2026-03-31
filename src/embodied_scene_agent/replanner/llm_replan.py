@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any, Callable
 
 from embodied_scene_agent.memory.schema import SceneMemory
@@ -19,6 +20,15 @@ from embodied_scene_agent.verifier.schema import VerificationResult
 _ALLOWED_PLANNER_KEYS = frozenset(
     {"task", "subgoal", "target_object", "skill", "success_check", "fallback", "reasoning", "confidence"}
 )
+_RECOVERABLE_STRING_KEYS = ("task", "subgoal", "target_object", "skill", "success_check", "fallback", "reasoning")
+_RECOVERABLE_VALUE_RE = re.compile(
+    r'"(?P<key>task|subgoal|target_object|skill|success_check|fallback|reasoning)"\s*:\s*"(?P<value>(?:[^"\\]|\\.)*)"'
+    r'|'
+    r'"(?P<null_key>task|subgoal|target_object|skill|success_check|fallback|reasoning|confidence)"\s*:\s*null'
+    r'|'
+    r'"(?P<num_key>confidence)"\s*:\s*(?P<num_value>-?\d+(?:\.\d+)?)'
+)
+_VL_MODEL_TYPES = frozenset({"qwen2_5_vl", "qwen2_vl"})
 
 
 def _strip_markdown_fences(text: str) -> str:
@@ -47,6 +57,35 @@ def _extract_json_object(text: str) -> dict[str, Any]:
     if not isinstance(obj, dict):
         raise ValueError("JSON root must be an object")
     return obj
+
+
+def _recover_partial_json_object(text: str) -> dict[str, Any]:
+    """
+    Best-effort field recovery for malformed JSON generations.
+
+    This is intentionally narrow: it only extracts complete key/value pairs for the planner contract.
+    """
+    t = _strip_markdown_fences(text)
+    start = t.find("{")
+    if start < 0:
+        return {}
+    recovered: dict[str, Any] = {}
+    for match in _RECOVERABLE_VALUE_RE.finditer(t[start:]):
+        key = match.group("key")
+        if key:
+            try:
+                recovered[key] = json.loads(f'"{match.group("value")}"')
+            except json.JSONDecodeError:
+                recovered[key] = match.group("value")
+            continue
+        key = match.group("null_key")
+        if key:
+            recovered[key] = None
+            continue
+        key = match.group("num_key")
+        if key:
+            recovered[key] = float(match.group("num_value"))
+    return recovered
 
 
 def classify_replan_parse_error(exc: BaseException, generated_text: str) -> str:
@@ -85,10 +124,111 @@ def _sanitize_planner_dict(raw: dict[str, Any]) -> dict[str, Any]:
     return {k: raw[k] for k in _ALLOWED_PLANNER_KEYS if k in raw}
 
 
+def _infer_success_check(*, skill: str, target_object: str, previous: PlannerOutput) -> str | None:
+    if (
+        previous.skill == skill
+        and previous.target_object == target_object
+        and isinstance(previous.success_check, str)
+        and previous.success_check.strip()
+    ):
+        return previous.success_check
+
+    if skill == "open":
+        return f"{target_object} has state tag 'open'"
+    if skill == "close":
+        return f"{target_object} has state tag 'closed'"
+    if skill == "grasp":
+        return f"{target_object} has state tag 'held'"
+    if skill == "place":
+        if target_object == "drawer":
+            return "red_block has state tag 'in_drawer'"
+        return f"placement completed for {target_object}"
+    if skill == "reach":
+        return f"end_effector aligned with {target_object}"
+    if skill == "move_to":
+        if target_object == "workspace":
+            return "noop"
+        return f"move_to completed for {target_object}"
+    return None
+
+
+def _repair_planner_dict(raw: dict[str, Any], *, previous: PlannerOutput) -> tuple[dict[str, Any], list[str]]:
+    repaired = dict(raw)
+    actions: list[str] = []
+
+    for key in _RECOVERABLE_STRING_KEYS:
+        if key not in repaired:
+            continue
+        value = repaired[key]
+        if value is None:
+            if key == "fallback":
+                repaired[key] = ""
+                actions.append("fallback:null_to_empty")
+            continue
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped != value:
+                repaired[key] = stripped
+
+    fallback = repaired.get("fallback")
+    if fallback is None:
+        repaired["fallback"] = ""
+        actions.append("fallback:missing_to_empty")
+
+    success_check = repaired.get("success_check")
+    skill = repaired.get("skill")
+    target_object = repaired.get("target_object")
+    if (
+        (success_check is None or (isinstance(success_check, str) and not success_check.strip()))
+        and isinstance(skill, str)
+        and skill.strip()
+        and isinstance(target_object, str)
+        and target_object.strip()
+    ):
+        inferred = _infer_success_check(
+            skill=skill.strip(),
+            target_object=target_object.strip(),
+            previous=previous,
+        )
+        if inferred:
+            repaired["success_check"] = inferred
+            actions.append("success_check:inferred_from_skill_target")
+
+    return repaired, actions
+
+
 _LLM_ENGINE: tuple[
     Callable[..., tuple[PlannerOutput | None, dict[str, Any]]] | None,
     dict[str, Any],
 ] | None = None
+
+
+def _select_loader_from_model_type(
+    model_type: str | None,
+    *,
+    has_image_text_loader: bool,
+) -> tuple[str | None, str | None]:
+    """
+    Return (loader_kind, error_reason).
+
+    loader_kind:
+      - "causal_lm": use AutoModelForCausalLM
+      - "image_text_to_text": use AutoModelForImageTextToText
+      - None: unsupported / unavailable path
+    """
+    mt = (model_type or "").strip().lower()
+    if not mt:
+        return "causal_lm", None
+    if mt in _VL_MODEL_TYPES:
+        if has_image_text_loader:
+            return "image_text_to_text", None
+        return (
+            None,
+            f"unsupported_model_family:{mt}:requires_AutoModelForImageTextToText",
+        )
+    if mt.endswith("_vl"):
+        return (None, f"unsupported_model_family:{mt}:no_loader_mapping")
+    return "causal_lm", None
 
 
 def get_llm_replan_engine(
@@ -106,19 +246,41 @@ def get_llm_replan_engine(
 
     try:
         import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from transformers import (
+            AutoConfig,
+            AutoModelForCausalLM,
+            AutoModelForImageTextToText,
+            AutoTokenizer,
+        )
     except Exception as e:  # noqa: BLE001
         meta["load_error"] = str(e)
+        meta["load_error_kind"] = "dependency_import_failed"
         _LLM_ENGINE = (None, meta)
         return _LLM_ENGINE
 
     try:
+        cfg = AutoConfig.from_pretrained(mid, trust_remote_code=True)
+        model_type = str(getattr(cfg, "model_type", "") or "")
+        loader_kind, loader_err = _select_loader_from_model_type(
+            model_type,
+            has_image_text_loader=AutoModelForImageTextToText is not None,
+        )
+        meta["model_type"] = model_type
+        meta["loader_kind"] = loader_kind
+        if loader_err is not None:
+            meta["load_error"] = loader_err
+            meta["load_error_kind"] = "unsupported_model_family"
+            _LLM_ENGINE = (None, meta)
+            return _LLM_ENGINE
         tokenizer = AutoTokenizer.from_pretrained(mid, trust_remote_code=True)
         dtype = torch.float16 if device == "cuda" and torch.cuda.is_available() else torch.float32
         kwargs: dict[str, Any] = {"torch_dtype": dtype, "trust_remote_code": True}
         if device == "cuda" and torch.cuda.is_available():
             kwargs["device_map"] = "auto"
-        model = AutoModelForCausalLM.from_pretrained(mid, **kwargs)
+        if loader_kind == "image_text_to_text":
+            model = AutoModelForImageTextToText.from_pretrained(mid, **kwargs)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(mid, **kwargs)
         if device == "cpu" or not torch.cuda.is_available():
             model = model.to("cpu")
             device = "cpu"
@@ -127,6 +289,7 @@ def get_llm_replan_engine(
         meta["device_resolved"] = device
     except Exception as e:  # noqa: BLE001
         meta["load_error"] = str(e)
+        meta["load_error_kind"] = "model_load_exception"
         _LLM_ENGINE = (None, meta)
         return _LLM_ENGINE
 
@@ -167,6 +330,7 @@ def get_llm_replan_engine(
             "parse_error_kind": "schema_validation_failed",
             "fallback_reason": "llm_replan_failed",
             "raw_generation_head": "",
+            "repair_actions": [],
         }
         for attempt in range(2):
             user_content = hard_user if attempt == 1 else base_user
@@ -189,14 +353,24 @@ def get_llm_replan_engine(
                 }
                 continue
             try:
-                raw = _extract_json_object(gen_stripped)
+                repair_actions: list[str] = []
+                try:
+                    raw = _extract_json_object(gen_stripped)
+                except ValueError:
+                    raw = _recover_partial_json_object(gen_stripped)
+                    if not raw:
+                        raise
+                    repair_actions.append("partial_json_recovery")
                 cleaned = _sanitize_planner_dict(raw)
+                cleaned, repaired_actions = _repair_planner_dict(cleaned, previous=previous)
+                repair_actions.extend(repaired_actions)
                 parse_audit: dict[str, Any] = {}
                 plan = validate_planner_output_dict(cleaned, parse_audit=parse_audit)
                 return plan, {
                     "parse_error_kind": None,
                     "fallback_reason": None,
                     "raw_generation_head": gen_stripped[:240],
+                    "repair_actions": repair_actions,
                     "skill_alias_normalized_from": parse_audit.get("skill_alias_normalized_from"),
                 }
             except (PlannerParseError, ValueError, json.JSONDecodeError, TypeError) as e:
@@ -205,6 +379,7 @@ def get_llm_replan_engine(
                     "parse_error_kind": kind,
                     "fallback_reason": str(e)[:500],
                     "raw_generation_head": gen_stripped[:500],
+                    "repair_actions": repair_actions if "repair_actions" in locals() else [],
                 }
         return None, last_meta
 
@@ -239,6 +414,8 @@ def try_llm_replan_planner_output(
             audit["whether_rule_based"] = False
             audit["fallback_stage"] = "validated"
             audit["replanner_parse_error_kind"] = inner.get("parse_error_kind")
+            audit["raw_generation_head"] = inner.get("raw_generation_head")
+            audit["parser_repair_actions"] = list(inner.get("repair_actions") or [])
             if inner.get("skill_alias_normalized_from"):
                 audit["skill_alias_normalized_from"] = inner["skill_alias_normalized_from"]
             return plan, audit
@@ -247,6 +424,8 @@ def try_llm_replan_planner_output(
         audit["fallback_reason"] = inner.get("fallback_reason", "llm_replan_failed")
         audit["fallback_stage"] = "parse_validate"
         audit["replanner_parse_error_kind"] = inner.get("parse_error_kind")
+        audit["raw_generation_head"] = inner.get("raw_generation_head")
+        audit["parser_repair_actions"] = list(inner.get("repair_actions") or [])
         audit["whether_rule_based"] = None
         return None, audit
     except Exception as e:  # noqa: BLE001

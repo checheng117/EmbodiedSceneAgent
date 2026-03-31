@@ -11,8 +11,8 @@ Explicit **3D object-level memory** as the interface for **verifiable** high-lev
 
 ## Evidence status
 
-- Ablations: E2 mock (symbolic): latest batch shows verifier_plus_replan task_completion=1.0, recovery_success_rate=0.75 — **fixture/smoke**, not official CALVIN.
-- Hybrid metrics: {"replan_parse_success_rate": 1.0, "validated_revision_rate": 1.0, "fallback_rate": 0.0, "repair_success_rate": 1.0, "unknown_failure_rate": 0.6153846153846154, "unknown_skill_rate": null, "alias_normalization_count": null, "invalid_skill_count": null}
+- Ablations: E2 mock (symbolic): latest batch shows verifier_plus_replan task_completion=1.0, recovery_success_rate=0.6666666666666666 — **fixture/smoke**, not official CALVIN.
+- Hybrid metrics: {"replan_parse_success_rate": 0.0, "validated_revision_rate": 0.0, "fallback_rate": 1.0, "repair_success_rate": 1.0, "unknown_failure_rate": 0.6, "unknown_skill_rate": 0.0, "alias_normalization_count": 0, "invalid_skill_count": 0}
 - RLBench: import_fail (fixture bridge documented).
 
 ## Next milestones (honest)

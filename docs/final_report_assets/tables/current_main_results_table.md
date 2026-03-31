@@ -1,18 +1,31 @@
-# Current main results (auto)
+# Assignment 3 main results table
 
-_All numbers trace to `results/` or `docs/` paths — not official leaderboards._
+_只使用仓库内已有产物；不混淆官方 benchmark 与代理评测。_
 
-| Category | Metric | Value | Artifact |
-|----------|--------|-------|----------|
-| Planner SFT (3B minimal) | checkpoint + run_meta | see run_meta.json | `results/checkpoints/planner_sft_3b_minimal/run_latest` |
-| Planner SFT | notes |  | `` |
-| Base vs tuned (JSONL proxy) | primary metric (file) | ['n', 'format_compliance_rate_base', 'format_compliance_rate_tuned'] | `results/eval/planner_base_vs_tuned/metrics.json` |
-| E2 mock symbolic | task_completion (verifier_plus_replan) | 1 | `results/experiments/e2_ablation/e2_mock_20260325T090753Z/metrics.json` |
-| E2 CALVIN fixture | task_completion (verifier_plus_replan) | 1 | `results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z/metrics.json` |
-| E2 CALVIN debug real-data (latest any batch) | task_completion (verifier_plus_replan) | 0 | `results/experiments/e2_ablation/e2_doc_refresh_same_task/metrics.json` |
-| E2 CALVIN debug grouped_sequence batch | task_completion (verifier_plus_replan) | 0 | `results/experiments/e2_ablation/e2_doc_refresh_aligned/metrics.json` |
-| E2 CALVIN debug same_task_subset batch | task_completion (verifier_plus_replan) | 0 | `results/experiments/e2_ablation/e2_doc_refresh_same_task/metrics.json` |
-| Hybrid replanner batch | parse / validated / repair rates | {'replan_parse_success_rate': 1.0, 'validated_revision_rate': 1.0, 'fallback_rate': 0.0, 'repair_success_rate': 1.0, 'unknown_failure_rate': 0.6153846153846154, 'unknown_skill_rate': None, 'alias_normalization_count': None, 'invalid_skill_count': None} | `results/experiments/hybrid_replanner_eval/hybrid_replanner_eval_20260325T090504Z/metrics.json` |
-| Hybrid replanner (CALVIN debug real) | parse / validated / repair rates | {'replan_parse_success_rate': 0.5, 'validated_revision_rate': 0.5, 'fallback_rate': 0.5, 'repair_success_rate': 0.0, 'unknown_failure_rate': 0.1, 'unknown_skill_rate': 0.0, 'alias_normalization_count': 0, 'invalid_skill_count': 0} | `results/experiments/hybrid_replanner_eval/hybrid_calvin_debug_same_task_20260326T095232Z/metrics.json` |
-| CALVIN debug planner SFT export | row counts + lineage | see stats md | `docs/calvin_debug_real_data_stats.md` |
-| RLBench bridge | deepest_reached_stage | import_fail | `results/rlbench_dev_smoke.json; results/rlbench_stack_diagnosis.json` |
+## A) Primary quantitative table (base vs tuned, directly comparable)
+
+Source: `results/eval/planner_base_vs_tuned/metrics.json` (`n=73`)
+
+| Track | Format compliance | Tool-use accuracy | Target-match rate | Strict task proxy |
+|------|---:|---:|---:|---:|
+| Stable baseline (planner base) | 1.000 | 0.082 | 0.329 | 0.068 |
+| Tuned / improved mainline (planner tuned, LoRA 3B minimal) | 1.000 | 0.219 | 0.479 | 0.205 |
+
+Notes:
+- `strict task proxy = format_compliance AND tool_skill_match AND target_match`（JSONL 代理，不等价于 CALVIN 环境成功率）。
+- 该表用于“base vs tuned”主对照，是当前最稳妥的可比定量证据。
+
+## B) Tiny 3-case qualitative comparison table (same setup, side-by-side)
+
+Shared setup: backend=`calvin_debug_real`, batch=`grouped_sequence`, episodes=`3`, seed=`42`, verifier_mode=`verifier_plus_replan`, replanner_mode=`hybrid`  
+Config source: each run `config.snapshot.json` + `run_manifest.json`.
+
+| Track | Run ID | Parse success | Validated revisions | Accepted revised plans | Semantic rejection (count) | Fallback stage summary | Terminal failure label |
+|------|------|---:|---:|---:|---:|------|------|
+| Stable baseline (hybrid mainline stable anchor) | `hybrid_calvin_debug_real_aligned_20260331T103029Z` | 3/3 | 3/3 | 0/3 | 3/3 | `semantic_acceptance: 3` | `repeated_no_effect_fallback_exhausted` (3) |
+| Qwen2.5-VL-3B tiny qualitative rerun | `hybrid_calvin_debug_real_aligned_3b_qual_pilot_rerun` | 3/3 | 3/3 | 3/3 | 0/3 | `validated: 3` | `repeated_no_effect_fallback_exhausted` (3) |
+| Qwen2.5-VL-7B tiny qualitative rerun | `hybrid_calvin_debug_real_aligned_7b_qual_pilot_rerun` | 3/3 | 3/3 | 2/3 | 1/3 (`target_absent_from_scene_memory`) | `validated: 2`, `semantic_acceptance: 1` | `repeated_no_effect_fallback_exhausted` (3) |
+
+Notes:
+- tiny 3-case 只用于定性诊断与“可接受修订计划”比较，不能外推为统计显著结论。
+- 三条轨道在 parse/validate 上均稳定；差异主要体现在 semantic acceptance（0/3 vs 3/3 vs 2/3）。

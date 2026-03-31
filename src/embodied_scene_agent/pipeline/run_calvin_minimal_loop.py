@@ -21,6 +21,7 @@ from embodied_scene_agent.verifier.schema import VerificationResult, is_state_un
 from embodied_scene_agent.verifier.state_diff import StateDiffVerifier
 
 LiveActionStrategy = Literal["symbolic_fallback", "live_zero_action_smoke"]
+_REPEATED_NO_EFFECT_LIMIT = 2
 
 
 def _default_fixture() -> Path:
@@ -136,6 +137,8 @@ def run_calvin_minimal_episode(
 
     history: list[str] = []
     failure_log: list[str] = []
+    repeated_no_effect_signature: tuple[str, str] | None = None
+    repeated_no_effect_count = 0
 
     for step_idx in range(max_steps):
         if env.task_success_symbolic():
@@ -266,8 +269,56 @@ def run_calvin_minimal_episode(
             if ver2.success:
                 history.append(new_plan.subgoal)
                 failure_log.clear()
+                repeated_no_effect_signature = None
+                repeated_no_effect_count = 0
             else:
                 failure_log.append(f"replan_failed:{ver2.failure_type}:{ver2.details}")
+                if is_state_unchanged_failure(ver2.failure_type):
+                    sig = (new_plan.skill, new_plan.target_object)
+                    if repeated_no_effect_signature == sig:
+                        repeated_no_effect_count += 1
+                    else:
+                        repeated_no_effect_signature = sig
+                        repeated_no_effect_count = 1
+                else:
+                    repeated_no_effect_signature = None
+                    repeated_no_effect_count = 0
+
+            step_log["repeated_no_effect_guard"] = {
+                "triggered": False,
+                "signature": (
+                    {
+                        "skill": repeated_no_effect_signature[0],
+                        "target_object": repeated_no_effect_signature[1],
+                    }
+                    if repeated_no_effect_signature is not None
+                    else None
+                ),
+                "consecutive_no_effect_count": repeated_no_effect_count,
+                "threshold": _REPEATED_NO_EFFECT_LIMIT,
+                "source": "verification_replan",
+            }
+            if (
+                repeated_no_effect_signature is not None
+                and repeated_no_effect_count >= _REPEATED_NO_EFFECT_LIMIT
+                and is_state_unchanged_failure(ver2.failure_type)
+            ):
+                step_log["repeated_no_effect_guard"]["triggered"] = True
+                failure_log.append("repeated_no_effect_fallback_exhausted")
+                if isinstance(step_log.get("replan_audit"), dict):
+                    step_log["replan_audit"].update(
+                        {
+                            "repeated_no_effect_detected": True,
+                            "repeated_no_effect_signature": (
+                                f"{repeated_no_effect_signature[0]}::{repeated_no_effect_signature[1]}"
+                            ),
+                            "repeated_no_effect_consecutive": repeated_no_effect_count,
+                            "repeated_no_effect_threshold": _REPEATED_NO_EFFECT_LIMIT,
+                            "repeated_no_effect_stop": True,
+                        }
+                    )
+                trace.final_message = "repeated_no_effect_fallback_exhausted"
+                break
 
         if env.task_success_symbolic():
             trace.success = True

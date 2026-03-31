@@ -10,4 +10,4 @@ This project studies how **explicit 3D relational memory** supports **checkable 
 
 ## 3) GitHub / project page style
 
-**EmbodiedSceneAgent** — memory-driven high-level planning loop with verifier + replanner. Latest hybrid batch: parse `1.0`, repair `1.0`. E2 ablations on **mock + CALVIN fixture + CALVIN debug npz**; RLBench **fixture bridge**; official benchmarks **not** reported. See `docs/final_report_assets/one_page_project_brief.md`.
+**EmbodiedSceneAgent** — memory-driven high-level planning loop with verifier + replanner. Latest hybrid batch: parse `0.0`, repair `1.0`. E2 ablations on **mock + CALVIN fixture + CALVIN debug npz**; RLBench **fixture bridge**; official benchmarks **not** reported. See `docs/final_report_assets/one_page_project_brief.md`.

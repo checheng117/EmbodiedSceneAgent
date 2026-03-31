@@ -8,8 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from embodied_scene_agent.reporting.headline_facts import unified_headline_facts
+from embodied_scene_agent.utils.experiment import read_run_artifact_status
 from embodied_scene_agent.utils.paths import rel_repo_path, repo_root
-from embodied_scene_agent.verifier.taxonomy import list_taxonomy_for_report
+from embodied_scene_agent.verifier.taxonomy import (
+    list_hybrid_episode_taxonomy_for_report,
+    list_taxonomy_for_report,
+)
 
 
 def _as_rel(root: Path, path: Path | str | None) -> str | None:
@@ -36,7 +40,12 @@ def _latest_subdir(root: Path) -> Path | None:
 def _e2_latest_for_backend(root: Path, backend: str) -> dict:
     base = root / "results" / "experiments" / "e2_ablation"
     if not base.is_dir():
-        return {"status": "not_run", "backend": backend, "path": _as_rel(root, base)}
+        return {
+            "status": "not_run",
+            "backend": backend,
+            "path": _as_rel(root, base),
+            "run_artifacts": read_run_artifact_status(root, None),
+        }
     best: Path | None = None
     best_mtime = -1.0
     for d in base.iterdir():
@@ -59,7 +68,12 @@ def _e2_latest_for_backend(root: Path, backend: str) -> dict:
             best_mtime = mp.stat().st_mtime
             best = d
     if best is None:
-        return {"status": "not_run", "backend": backend, "path": _as_rel(root, base)}
+        return {
+            "status": "not_run",
+            "backend": backend,
+            "path": _as_rel(root, base),
+            "run_artifacts": read_run_artifact_status(root, None),
+        }
     m = _read_json(best / "metrics.json")
     return {
         "status": "available",
@@ -67,6 +81,7 @@ def _e2_latest_for_backend(root: Path, backend: str) -> dict:
         "latest_dir": _as_rel(root, best),
         "modes": (m or {}).get("modes", {}),
         "experiment_id": (m or {}).get("experiment_id"),
+        "run_artifacts": read_run_artifact_status(root, best),
     }
 
 
@@ -148,6 +163,7 @@ def _hybrid_smoke_snapshot(root: Path) -> dict | None:
         "replan_count": (tr or {}).get("replan_count"),
         "first_replan_audit": audit,
         "fallback_stats": fb,
+        "run_artifacts": read_run_artifact_status(root, latest),
     }
 
 
@@ -198,9 +214,17 @@ def _hybrid_eval_latest_where(
         "fallback_reason_counts": fb.get("fallback_reason_counts"),
         "fallback_stage_counts": fb.get("fallback_stage_counts"),
         "parse_error_kind_counts": fb.get("parse_error_kind_counts") or {},
+        "acceptance_rejection_reason_counts": (
+            metrics.get("acceptance_rejection_reason_counts")
+            or fb.get("acceptance_rejection_reason_counts")
+            or {}
+        ),
+        "episode_failure_label_counts": metrics.get("episode_failure_label_counts") or {},
+        "terminal_failure_label_counts": metrics.get("terminal_failure_label_counts") or {},
         "hybrid_replanner_batch_headline": {k: metrics.get(k) for k in keys},
         "hybrid_parse_error_breakdown": fb.get("parse_error_kind_counts") or {},
         "backend": metrics.get("backend"),
+        "run_artifacts": read_run_artifact_status(root, latest),
     }
 
 
@@ -263,6 +287,7 @@ def _e2_latest_calvin_debug_batch(root: Path, batch: str) -> dict:
             "backend": "calvin_debug_real",
             "calvin_debug_batch": batch,
             "path": _as_rel(root, base),
+            "run_artifacts": read_run_artifact_status(root, None),
         }
     m = _read_json(best / "metrics.json")
     return {
@@ -272,6 +297,27 @@ def _e2_latest_calvin_debug_batch(root: Path, batch: str) -> dict:
         "latest_dir": _as_rel(root, best),
         "modes": (m or {}).get("modes", {}),
         "experiment_id": (m or {}).get("experiment_id"),
+        "run_artifacts": read_run_artifact_status(root, best),
+    }
+
+
+def _planner_train_artifact_status(root: Path) -> dict:
+    run_dir = root / "results" / "checkpoints" / "planner_sft_3b_minimal" / "run_latest"
+    run_meta_path = run_dir / "run_meta.json"
+    config_path = run_dir / "config.snapshot.yaml"
+    if run_meta_path.is_file() and config_path.is_file():
+        status = "ready"
+    elif run_meta_path.is_file() or config_path.is_file():
+        status = "partial"
+    else:
+        status = "missing"
+    run_meta = _read_json(run_meta_path)
+    return {
+        "status": status,
+        "latest_dir": _as_rel(root, run_dir),
+        "run_meta_path": _as_rel(root, run_meta_path) if run_meta_path.is_file() else None,
+        "config_snapshot_path": _as_rel(root, config_path) if config_path.is_file() else None,
+        "experiment_id": (run_meta or {}).get("experiment_id"),
     }
 
 
@@ -419,6 +465,15 @@ def build_report_payload(root: Path) -> dict:
             "hybrid_calvin_debug_real_batch_headline": (hy.get("eval_batch_calvin_debug_real") or {}).get(
                 "metrics_headline"
             ),
+            "hybrid_calvin_debug_real_failure_labels": (hy.get("eval_batch_calvin_debug_real") or {}).get(
+                "episode_failure_label_counts"
+            ),
+            "hybrid_calvin_debug_real_terminal_labels": (hy.get("eval_batch_calvin_debug_real") or {}).get(
+                "terminal_failure_label_counts"
+            ),
+            "hybrid_calvin_debug_real_acceptance_rejections": (
+                hy.get("eval_batch_calvin_debug_real") or {}
+            ).get("acceptance_rejection_reason_counts"),
             "hybrid_calvin_debug_real_aligned_batch_headline": (
                 hy.get("eval_batch_calvin_debug_real_aligned") or {}
             ).get("metrics_headline"),
@@ -435,6 +490,7 @@ def build_report_payload(root: Path) -> dict:
         "rlbench_bridge_status": rb,
         "hybrid_replanner_status": hy,
         "failure_taxonomy": list_taxonomy_for_report(),
+        "hybrid_episode_failure_taxonomy": list_hybrid_episode_taxonomy_for_report(),
         "curated_demo_links": {
             "e2_cases": "docs/failure_cases/e2_ablation_cases.md",
             "e2_demos": "results/demos/e2_ablation_cases/",
@@ -464,6 +520,22 @@ def build_report_payload(root: Path) -> dict:
         },
         "eval_metrics_proxy": eval_metrics,
         "train_run_meta": train_meta,
+        "reproducibility_snapshot": {
+            "planner_train_run": _planner_train_artifact_status(root),
+            "latest_e2_mock": (e2.get("e2_on_mock") or {}).get("run_artifacts") or read_run_artifact_status(root, None),
+            "latest_e2_calvin_fixture": (e2.get("e2_on_calvin_fixture") or {}).get("run_artifacts")
+            or read_run_artifact_status(root, None),
+            "latest_e2_calvin_debug_real": (e2.get("e2_on_calvin_debug_real") or {}).get("run_artifacts")
+            or read_run_artifact_status(root, None),
+            "latest_hybrid_eval": (hy.get("eval_batch") or {}).get("run_artifacts")
+            or read_run_artifact_status(root, None),
+            "latest_hybrid_eval_calvin_debug_real": (
+                hy.get("eval_batch_calvin_debug_real") or {}
+            ).get("run_artifacts")
+            or read_run_artifact_status(root, None),
+            "latest_hybrid_smoke": (hy.get("smoke") or {}).get("run_artifacts")
+            or read_run_artifact_status(root, None),
+        },
         "artifact_index": {
             "episode_log_schema": "docs/episode_log_schema.md",
             "scene_memory_contract_v2": "docs/scene_memory_contract_v2.md",
@@ -542,6 +614,17 @@ def render_markdown(payload: dict) -> str:
     else:
         lines.append("_No eval metrics file._\n")
 
+    lines.extend(
+        [
+            "## Reproducibility snapshot",
+            "",
+            "```json",
+            json.dumps(payload.get("reproducibility_snapshot"), indent=2),
+            "```",
+            "",
+        ]
+    )
+
     lines.extend(["## Curated demo links", ""])
     for k, v in (payload.get("curated_demo_links") or {}).items():
         lines.append(f"- **{k}**: `{v}`")
@@ -560,6 +643,19 @@ def render_markdown(payload: dict) -> str:
         cond = (row.get("condition") or "")[:80].replace("|", "\\|")
         rep = (row.get("replan") or "")[:80].replace("|", "\\|")
         lines.append(f"| `{row.get('failure_type')}` | {cond} | {rep} |")
+    lines.extend(
+        [
+            "",
+            "## Hybrid episode failure refinement",
+            "",
+            "| failure_label | condition (short) | replan hint |",
+            "|---|---|---|",
+        ]
+    )
+    for row in payload.get("hybrid_episode_failure_taxonomy") or []:
+        cond = (row.get("condition") or "")[:80].replace("|", "\\|")
+        rep = (row.get("replan") or "")[:80].replace("|", "\\|")
+        lines.append(f"| `{row.get('failure_label')}` | {cond} | {rep} |")
     lines.extend(["", "## Artifact index", ""])
     for k, v in payload.get("artifact_index", {}).items():
         lines.append(f"- **{k}**: `{v}`")
@@ -570,6 +666,7 @@ def render_dashboard(payload: dict) -> str:
     ps = payload.get("project_status_snapshot") or {}
     rb = payload.get("rlbench_bridge_status") or {}
     hy = payload.get("hybrid_replanner_status") or {}
+    repro = payload.get("reproducibility_snapshot") or {}
     lines = [
         "# Status board (auto)",
         "",
@@ -616,6 +713,19 @@ def render_dashboard(payload: dict) -> str:
         json.dumps(ps.get("hybrid_parse_error_breakdown") or {}, indent=2),
         "```",
         "",
+        "## Hybrid refined failure labels (CALVIN debug real)",
+        "",
+        "```json",
+        json.dumps(
+            {
+                "episode_failure_label_counts": ps.get("hybrid_calvin_debug_real_failure_labels") or {},
+                "terminal_failure_label_counts": ps.get("hybrid_calvin_debug_real_terminal_labels") or {},
+                "acceptance_rejection_reason_counts": ps.get("hybrid_calvin_debug_real_acceptance_rejections") or {},
+            },
+            indent=2,
+        ),
+        "```",
+        "",
         "## RLBench stages present (last smoke JSON)",
         "",
         f"`{rb.get('stages_present')}`",
@@ -631,6 +741,16 @@ def render_dashboard(payload: dict) -> str:
     ]
     for s in payload.get("current_strongest_results") or []:
         lines.append(f"- `{s.get('path')}`")
+    lines.extend(
+        [
+            "",
+            "## Reproducibility contract",
+            "",
+            "```json",
+            json.dumps(repro, indent=2),
+            "```",
+        ]
+    )
     lines.extend(["", "## Smoke vs future", "", "| Item | |", "|------|--|", "| RLBench fixture→memory→planner | **smoke** |", "| RLBench sim_reset | only if CoppeliaSim+rlbench OK |", "| Official benchmarks | **future_only** |", "| A100 7B | **future_only** (template exists) |", ""])
     lines.extend(["## Limitations", ""])
     for g in (payload.get("open_gaps_limitations") or [])[:6]:

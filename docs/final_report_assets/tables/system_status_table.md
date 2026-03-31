@@ -1,6 +1,6 @@
 # System status (module-level)
 
-_Generated: `2026-03-27T14:22:34.109604+00:00`_
+_Generated: `2026-03-31T11:48:18.064013+00:00`_
 
 | Module / capability | Ready state | Pointer |
 |---------------------|-------------|---------|

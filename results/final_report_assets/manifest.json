@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-03-27T14:22:34.108635+00:00",
+  "generated_utc": "2026-03-31T11:48:18.062827+00:00",
   "paths": [
     "docs/final_report_assets/report_outline_final.md",
     "docs/final_report_assets/executive_summary.md",
@@ -25,7 +25,9 @@
     "docs/final_report_assets/case_studies/e2_calvin_fixture_case.md",
     "docs/final_report_assets/case_studies/hybrid_success_case.md",
     "docs/final_report_assets/case_studies/hybrid_parse_fallback_case.md",
+    "docs/final_report_assets/case_studies/tiny_3case_qualitative_summary.md",
     "docs/final_report_assets/case_studies/rlbench_bridge_case.md",
+    "docs/final_report_assets/assignment3_report_ready_text.md",
     "results/final_report_assets/unified_headlines.json"
   ]
 }

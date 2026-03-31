@@ -811,7 +811,14 @@ CASE_TEMPLATE = """# {title}
 """
 
 
-def _case_from_step_json(data: dict[str, Any], *, title: str, context: str, links: str) -> str:
+def _case_from_step_json(
+    data: dict[str, Any],
+    *,
+    title: str,
+    context: str,
+    links: str,
+    why: str | None = None,
+) -> str:
     st = data.get("step") if isinstance(data.get("step"), dict) else data
     if not isinstance(st, dict):
         st = {}
@@ -826,7 +833,7 @@ def _case_from_step_json(data: dict[str, Any], *, title: str, context: str, link
         verifier=f"```json\n{json.dumps(st.get('verification'), indent=2, ensure_ascii=False) if st.get('verification') else '_n/a_'}\n```",
         replanner=f"```json\n{json.dumps(st.get('replan_audit'), indent=2, ensure_ascii=False) if st.get('replan_audit') else '_n/a_'}\n```",
         outcome=json.dumps(data.get("trace_summary") or {}, ensure_ascii=False),
-        why="_Demonstrates verifier + replan wiring on symbolic mock; numbers are not official CALVIN._",
+        why=why or "_Demonstrates verifier + replan wiring on symbolic mock; numbers are not official CALVIN._",
         links=links,
     )
 
@@ -884,22 +891,46 @@ def write_case_studies(root: Path, dest: Path) -> None:
         _write(dest / "e2_calvin_fixture_case.md", "# E2 CALVIN fixture case\n\n_Missing calvin case JSON._\n")
 
     hy_ok = _read_json(demos / "hybrid_replanner_cases" / "case_llm_repair_success.json") or {}
+    hy_ok_links = "`results/demos/hybrid_replanner_cases/case_llm_repair_success.json`"
+    hy_ok_context = "Mock v0 episode; latest batch artifact."
+    if not hy_ok.get("step"):
+        alt = _read_json(demos / "hybrid_replanner_cases" / "case_calvin_debug_real_aligned_hybrid_success.json") or {}
+        if alt.get("step"):
+            hy_ok = alt
+            hy_ok_links = "`results/demos/hybrid_replanner_cases/case_calvin_debug_real_aligned_hybrid_success.json`"
+            hy_ok_context = "CALVIN debug real-data batch; latest aligned artifact, not official benchmark."
     if hy_ok.get("step"):
         _write(
             dest / "hybrid_success_case.md",
             _case_from_step_json(
                 hy_ok,
                 title="Hybrid replanner — LLM path success",
-                context="Mock v0 episode; latest batch artifact.",
-                links="`results/demos/hybrid_replanner_cases/case_llm_repair_success.json`",
+                context=hy_ok_context,
+                links=hy_ok_links,
+                why=(
+                    "_Shows a real CALVIN debug hybrid replan artifact with refined failure labels; "
+                    "not an official benchmark result._"
+                    if hy_ok.get("backend") == "calvin_debug_real"
+                    else None
+                ),
             ),
         )
     else:
         _write(dest / "hybrid_success_case.md", "# Hybrid success\n\n_Missing case JSON._\n")
 
-    hy_fb = _read_json(demos / "hybrid_replanner_cases" / "case_parse_fallback.json") or {}
+    hy_fb = (
+        _read_json(demos / "hybrid_replanner_cases" / "case_calvin_debug_real_aligned_hybrid_acceptance_reject.json")
+        or {}
+    )
+    if not hy_fb.get("step"):
+        hy_fb = _read_json(demos / "hybrid_replanner_cases" / "case_parse_fallback.json") or {}
     src_note = ""
-    if hy_fb.get("note") and not hy_fb.get("step"):
+    if hy_fb.get("case") == "calvin_debug_hybrid_acceptance_reject" and hy_fb.get("step"):
+        src_note = (
+            "\n\n> **Source note:** Latest aligned CALVIN debug batch did not hit a parse-failure trace, "
+            "so this page uses the real semantic-acceptance rejection case instead.\n"
+        )
+    elif hy_fb.get("note") and not hy_fb.get("step"):
         src_note = (
             "\n\n> **Source note:** This batch did not hit a parse-failure step; JSON contains explanation only. "
             "For a parse-failure **trace**, use the latest `hybrid_replanner_smoke` run if available.\n"

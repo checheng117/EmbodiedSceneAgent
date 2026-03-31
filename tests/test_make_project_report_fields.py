@@ -13,6 +13,9 @@ def test_build_report_payload_has_rlbench_hybrid_e2_fields() -> None:
     assert "hybrid_parse_error_breakdown" in snap
     assert "e2_best_case_paths" in snap
     assert "mock_vs_calvin_short_note" in snap
+    repro = p.get("reproducibility_snapshot") or {}
+    assert "latest_e2_mock" in repro
+    assert "latest_hybrid_eval" in repro
     uhf = p.get("unified_headline_facts") or {}
     assert isinstance(uhf, dict)
     assert "rlbench_deepest_stage" in uhf

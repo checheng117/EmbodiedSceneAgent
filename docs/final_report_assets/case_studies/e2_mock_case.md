@@ -11,6 +11,7 @@ Symbolic mock grid; **not** official CALVIN.
     "instruction": "put the red block in the drawer",
     "forced_grasp_failures": 1,
     "calvin_variant": null,
+    "npz_path": null,
     "success": true,
     "replan_count": 1,
     "num_steps": 3,
@@ -170,7 +171,8 @@ Symbolic mock grid; **not** official CALVIN.
   "revised_plan_validated": null,
   "fallback_reason": null,
   "fallback_stage": null,
-  "replanner_parse_error_kind": null
+  "replanner_parse_error_kind": null,
+  "skill_alias_normalized_from": null
 }
 ```
 

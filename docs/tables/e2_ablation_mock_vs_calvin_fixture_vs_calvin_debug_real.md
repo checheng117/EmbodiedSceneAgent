@@ -8,17 +8,17 @@ _**Not** official CALVIN leaderboard — three **dev** evidence layers._
 | `none` | failure_detected_rate | 0.0 | 0.0 | 0.0 |
 | `none` | replan_trigger_rate | 0.0 | 0.0 | 0.0 |
 | `none` | recovery_success_rate | 0.0 | 0.0 | 0.0 |
-| `none` | average_steps | 4.125 | 2.25 | 12.0 |
+| `none` | average_steps | 4.0 | 2.3333333333333335 | 12.0 |
 | `verifier_only` | task_completion_rate | 1.0 | 1.0 | 0.0 |
-| `verifier_only` | failure_detected_rate | 0.2727272727272727 | 0.0 | 0.9479166666666666 |
+| `verifier_only` | failure_detected_rate | 0.25 | 0.0 | 0.9583333333333334 |
 | `verifier_only` | replan_trigger_rate | 0.0 | 0.0 | 0.0 |
 | `verifier_only` | recovery_success_rate | 0.0 | 0.0 | 0.0 |
-| `verifier_only` | average_steps | 4.125 | 2.25 | 12.0 |
+| `verifier_only` | average_steps | 4.0 | 2.3333333333333335 | 12.0 |
 | `verifier_plus_replan` | task_completion_rate | 1.0 | 1.0 | 0.0 |
-| `verifier_plus_replan` | failure_detected_rate | 0.2222222222222222 | 0.0 | 0.9479166666666666 |
-| `verifier_plus_replan` | replan_trigger_rate | 0.75 | 0.0 | 11.375 |
-| `verifier_plus_replan` | recovery_success_rate | 0.75 | 0.0 | 0.0 |
-| `verifier_plus_replan` | average_steps | 3.375 | 2.25 | 12.0 |
+| `verifier_plus_replan` | failure_detected_rate | 0.2 | 0.0 | 0.9583333333333334 |
+| `verifier_plus_replan` | replan_trigger_rate | 0.6666666666666666 | 0.0 | 11.5 |
+| `verifier_plus_replan` | recovery_success_rate | 0.6666666666666666 | 0.0 | 0.0 |
+| `verifier_plus_replan` | average_steps | 3.3333333333333335 | 2.3333333333333335 | 12.0 |
 
 ## 三层证据各自意味着什么
 
@@ -32,6 +32,6 @@ _**Not** official CALVIN leaderboard — three **dev** evidence layers._
 
 ### Artifact paths（相对仓库根）
 
-- mock: `results/experiments/e2_ablation/e2_mock_20260325T090753Z`
-- calvin_fixture: `results/experiments/e2_ablation/e2_calvin_fixture_20260325T090754Z`
-- calvin_debug_real: `results/experiments/e2_ablation/e2_doc_refresh_aligned`
+- mock: `results/experiments/e2_ablation/e2_mock_20260331T083930Z`
+- calvin_fixture: `results/experiments/e2_ablation/e2_calvin_fixture_20260331T084742Z`
+- calvin_debug_real: `results/experiments/e2_ablation/e2_calvin_debug_real_aligned_20260331T084633Z`

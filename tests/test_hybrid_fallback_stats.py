@@ -15,6 +15,7 @@ def test_fallback_stats_structure() -> None:
                 "fallback_reason": "test",
                 "fallback_stage": "parse_validate",
                 "replanner_parse_error_kind": "truncated_json",
+                "acceptance_rejection_reason": "target_absent_from_scene_memory",
             }
         }
     )
@@ -23,7 +24,9 @@ def test_fallback_stats_structure() -> None:
     assert "fallback_reason_counts" in fb
     assert "fallback_stage_counts" in fb
     assert "parse_error_kind_counts" in fb
+    assert "acceptance_rejection_reason_counts" in fb
     assert fb["parse_error_kind_counts"].get("truncated_json") == 1
+    assert fb["acceptance_rejection_reason_counts"].get("target_absent_from_scene_memory") == 1
 
 
 def test_report_payload_has_rlbench_layers() -> None:

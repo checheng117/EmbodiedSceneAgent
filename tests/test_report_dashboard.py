@@ -10,4 +10,5 @@ def test_build_report_has_dashboard_fields() -> None:
     assert "e2_ablation_snapshot" in p
     assert "rlbench_bridge_status" in p
     assert "hybrid_replanner_status" in p
+    assert "reproducibility_snapshot" in p
     assert "open_gaps_limitations" in p

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -15,7 +16,9 @@ from embodied_scene_agent.evaluation.hybrid_replanner_smoke import (
 from embodied_scene_agent.evaluation.run_ablation_e2 import calvin_debug_real_scenario_list
 from embodied_scene_agent.pipeline.run_calvin_minimal_loop import run_calvin_minimal_episode
 from embodied_scene_agent.pipeline.v0_loop import run_v0_episode
+from embodied_scene_agent.utils.experiment import normalize_experiment_id, write_run_artifacts
 from embodied_scene_agent.utils.paths import repo_root
+from embodied_scene_agent.verifier.taxonomy import classify_hybrid_episode_failure
 
 
 def _audits_from_trace(trace: Any) -> list[dict[str, Any]]:
@@ -43,19 +46,22 @@ def main() -> None:
         choices=["pooled_manifest", "grouped_sequence", "same_task_subset"],
         default="grouped_sequence",
     )
+    parser.add_argument("--experiment-id", type=str, default="")
+    parser.add_argument("--max-steps", type=int, default=10)
+    parser.add_argument("--seed", type=int, default=42)
     args, _ = parser.parse_known_args()
     root = args.root or repo_root()
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     if args.backend == "calvin_debug_real":
         b = args.calvin_debug_batch
         if b == "grouped_sequence":
-            eid = f"hybrid_calvin_debug_real_aligned_{ts}"
+            prefix = "hybrid_calvin_debug_real_aligned"
         elif b == "same_task_subset":
-            eid = f"hybrid_calvin_debug_same_task_{ts}"
+            prefix = "hybrid_calvin_debug_same_task"
         else:
-            eid = f"hybrid_calvin_debug_real_{ts}"
+            prefix = "hybrid_calvin_debug_real"
     else:
-        eid = f"hybrid_replanner_eval_{ts}"
+        prefix = "hybrid_replanner_eval"
+    eid = normalize_experiment_id(prefix=prefix, explicit_id=args.experiment_id)
     out_dir = root / "results" / "experiments" / "hybrid_replanner_eval" / eid
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -63,13 +69,15 @@ def main() -> None:
     rows: list[dict[str, Any]] = []
     unknown_fail_steps = 0
     total_fail_steps = 0
+    episode_failure_counts: Counter[str] = Counter()
+    terminal_failure_counts: Counter[str] = Counter()
 
     n_ep = max(1, int(args.episodes))
     scenarios: list[dict[str, Any]] = []
     if args.backend == "calvin_debug_real":
         scenarios = calvin_debug_real_scenario_list(
             n_episodes=max(n_ep, 12),
-            seed=42,
+            seed=args.seed,
             batch=args.calvin_debug_batch,  # type: ignore[arg-type]
         )[:n_ep]
 
@@ -77,7 +85,7 @@ def main() -> None:
         if args.backend == "mock":
             tr = run_v0_episode(
                 "put the red block in the drawer",
-                max_steps=10,
+                max_steps=max(1, int(args.max_steps)),
                 forced_grasp_failures=i % 3,
                 verifier_mode="verifier_plus_replan",
                 replanner_mode="hybrid",
@@ -89,7 +97,7 @@ def main() -> None:
             scen = scenarios[i]
             tr = run_calvin_minimal_episode(
                 scen["instruction"],
-                max_steps=10,
+                max_steps=max(1, int(args.max_steps)),
                 initial_observation=scen["initial_observation"],
                 verifier_mode="verifier_plus_replan",
                 replanner_mode="hybrid",
@@ -99,6 +107,7 @@ def main() -> None:
         traces.append(tr)
         audits = _audits_from_trace(tr)
         fa0 = audits[0] if audits else None
+        failure_summary = classify_hybrid_episode_failure(tr.steps, final_message=tr.final_message)
         row_base: dict[str, Any] = {
             "episode_index": i,
             "success": tr.success,
@@ -108,11 +117,22 @@ def main() -> None:
             "llm_audit_count": len(audits),
             "first_llm_audit": fa0,
             "replanner_parse_error_kind": (fa0 or {}).get("replanner_parse_error_kind"),
+            "acceptance_rejection_reason": (fa0 or {}).get("acceptance_rejection_reason"),
+            "acceptance_rejection_details": (fa0 or {}).get("acceptance_rejection_details"),
+            "episode_failure_label": failure_summary["episode_failure_label"],
+            "terminal_failure_label": failure_summary["terminal_failure_label"],
+            "validated_replan_issue_label": failure_summary["validated_replan_issue_label"],
+            "failure_label_reasons": failure_summary["label_reasons"],
+            "terminal_failure_type": failure_summary["terminal_failure_type"],
+            "terminal_failure_details": failure_summary["terminal_failure_details"],
         }
         if scen is not None:
             row_base["npz_path"] = scen.get("npz_path")
             row_base["backend"] = "calvin_debug_real"
         rows.append(row_base)
+        if not tr.success:
+            episode_failure_counts[row_base["episode_failure_label"]] += 1
+            terminal_failure_counts[row_base["terminal_failure_label"]] += 1
         for st in tr.steps:
             v = st.get("verification") or {}
             if v.get("success") is False:
@@ -145,6 +165,9 @@ def main() -> None:
         "alias_normalization_count": alias_n,
         "invalid_skill_count": inv_skill,
         "parse_error_kind_counts": fb.get("parse_error_kind_counts") or {},
+        "acceptance_rejection_reason_counts": fb.get("acceptance_rejection_reason_counts") or {},
+        "episode_failure_label_counts": dict(episode_failure_counts),
+        "terminal_failure_label_counts": dict(terminal_failure_counts),
         "generated_utc": datetime.now(timezone.utc).isoformat(),
         "honest_scope": (
             "CALVIN official debug npz → vector teacher + hybrid replanner batch — not official benchmark."
@@ -154,9 +177,29 @@ def main() -> None:
         "backend": args.backend,
         "calvin_debug_batch": args.calvin_debug_batch if args.backend == "calvin_debug_real" else None,
     }
+    run_artifacts = write_run_artifacts(
+        out_dir,
+        root=root,
+        experiment_id=eid,
+        entrypoint="python -m embodied_scene_agent.evaluation.hybrid_replanner_eval",
+        config_snapshot={
+            "backend": args.backend,
+            "calvin_debug_batch": args.calvin_debug_batch if args.backend == "calvin_debug_real" else None,
+            "episodes": n_ep,
+            "max_steps": max(1, int(args.max_steps)),
+            "seed": args.seed,
+            "planner_fixture": "first_step_unknown_skill",
+            "verifier_mode": "verifier_plus_replan",
+            "replanner_mode": "hybrid",
+        },
+        notes=[
+            "Batch hybrid eval for schema/audit stability under the 3090-only roadmap.",
+            "Not an official benchmark run.",
+        ],
+    )
 
     (out_dir / "metrics.json").write_text(
-        json.dumps({**metrics, "fallback_detail": fb}, indent=2, ensure_ascii=False),
+        json.dumps({**metrics, "fallback_detail": fb, "run_artifacts": run_artifacts}, indent=2, ensure_ascii=False),
         encoding="utf-8"
     )
     (out_dir / "fallback_stats.json").write_text(
@@ -180,13 +223,26 @@ def main() -> None:
         "## metrics.json (headline)",
         "",
         "```json",
-        json.dumps(metrics, indent=2),
+        json.dumps({**metrics, "run_artifacts": run_artifacts}, indent=2),
         "```",
         "",
         "## fallback_stats.json",
         "",
         "```json",
         json.dumps(fb, indent=2),
+        "```",
+        "",
+        "## refined_failure_labels",
+        "",
+        "```json",
+        json.dumps(
+            {
+                "episode_failure_label_counts": metrics.get("episode_failure_label_counts") or {},
+                "terminal_failure_label_counts": metrics.get("terminal_failure_label_counts") or {},
+                "acceptance_rejection_reason_counts": metrics.get("acceptance_rejection_reason_counts") or {},
+            },
+            indent=2,
+        ),
         "```",
         "",
     ]
@@ -232,6 +288,24 @@ def _append_replanner_hybrid_results_doc(root: Path, metrics: dict, fb: dict, ou
         "",
         "```json",
         json.dumps(metrics.get("parse_error_kind_counts") or {}, indent=2),
+        "```",
+        "",
+        "### episode_failure_label_counts",
+        "",
+        "```json",
+        json.dumps(metrics.get("episode_failure_label_counts") or {}, indent=2),
+        "```",
+        "",
+        "### terminal_failure_label_counts",
+        "",
+        "```json",
+        json.dumps(metrics.get("terminal_failure_label_counts") or {}, indent=2),
+        "```",
+        "",
+        "### acceptance_rejection_reason_counts",
+        "",
+        "```json",
+        json.dumps(metrics.get("acceptance_rejection_reason_counts") or {}, indent=2),
         "```",
         "",
         "### fallback_reason_counts",
@@ -295,17 +369,21 @@ def _write_case_artifacts_calvin_debug(
         tag = "calvin_debug_same_task"
         succ_f = "case_calvin_debug_same_task_hybrid_success.json"
         fb_f = "case_calvin_debug_same_task_hybrid_fallback.json"
+        reject_f = "case_calvin_debug_same_task_hybrid_acceptance_reject.json"
     elif calvin_debug_batch == "grouped_sequence":
         tag = "calvin_debug_real_aligned"
         succ_f = "case_calvin_debug_real_aligned_hybrid_success.json"
         fb_f = "case_calvin_debug_real_aligned_hybrid_fallback.json"
+        reject_f = "case_calvin_debug_real_aligned_hybrid_acceptance_reject.json"
     else:
         tag = "calvin_debug_real_pooled"
         succ_f = "case_calvin_debug_hybrid_success.json"
         fb_f = "case_calvin_debug_hybrid_fallback.json"
+        reject_f = "case_calvin_debug_hybrid_acceptance_reject.json"
 
     success_llm = None
     parse_fallback = None
+    acceptance_reject = None
     for idx, tr in enumerate(traces):
         for st in tr.steps:
             ra = st.get("replan_audit") or {}
@@ -317,6 +395,33 @@ def _write_case_artifacts_calvin_debug(
                 success_llm = (idx, tr, st)
             if parse_fallback is None and ra.get("llm_replanner_called") and ra.get("replanner_parse_ok") is False:
                 parse_fallback = (idx, tr, st)
+            if acceptance_reject is None and ra.get("acceptance_rejection_reason"):
+                acceptance_reject = (idx, tr, st)
+
+    succ_audit = (success_llm[2].get("replan_audit") or {}) if success_llm is not None else {}
+    fb_audit = (parse_fallback[2].get("replan_audit") or {}) if parse_fallback is not None else {}
+    reject_audit = (acceptance_reject[2].get("replan_audit") or {}) if acceptance_reject is not None else {}
+    succ_summary = (
+        classify_hybrid_episode_failure(success_llm[1].steps, final_message=success_llm[1].final_message)
+        if success_llm is not None
+        else {}
+    )
+    episode_failure_counts = Counter(
+        classify_hybrid_episode_failure(tr.steps, final_message=tr.final_message)["episode_failure_label"]
+        for tr in traces
+        if not tr.success
+    )
+    terminal_failure_counts = Counter(
+        classify_hybrid_episode_failure(tr.steps, final_message=tr.final_message)["terminal_failure_label"]
+        for tr in traces
+        if not tr.success
+    )
+    acceptance_rejection_counts = Counter(
+        str((st.get("replan_audit") or {}).get("acceptance_rejection_reason"))
+        for tr in traces
+        for st in tr.steps
+        if (st.get("replan_audit") or {}).get("acceptance_rejection_reason")
+    )
 
     def _dump(
         tup: tuple[int, Any, dict] | None,
@@ -335,6 +440,12 @@ def _write_case_artifacts_calvin_debug(
             }
         else:
             ep_i, tr, st = tup
+            trace_summary = {
+                "success": tr.success,
+                "replan_count": tr.replan_count,
+                "final_message": tr.final_message,
+                **classify_hybrid_episode_failure(tr.steps, final_message=tr.final_message),
+            }
             payload = {
                 "case": label,
                 "backend": "calvin_debug_real",
@@ -343,11 +454,7 @@ def _write_case_artifacts_calvin_debug(
                 "experiment_id": eid,
                 "episode_index": ep_i,
                 "step": st,
-                "trace_summary": {
-                    "success": tr.success,
-                    "replan_count": tr.replan_count,
-                    "final_message": tr.final_message,
-                },
+                "trace_summary": trace_summary,
             }
         (demo / fname).write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -363,6 +470,12 @@ def _write_case_artifacts_calvin_debug(
         "calvin_debug_hybrid_parse_fallback",
         "本 batch 未找到 parse 失败步骤。",
     )
+    _dump(
+        acceptance_reject,
+        reject_f,
+        "calvin_debug_hybrid_acceptance_reject",
+        "本 batch 未找到 semantic acceptance reject 样例。",
+    )
 
     md_path = root / "docs" / "failure_cases" / "hybrid_replanner_cases.md"
     section_heading = {
@@ -376,11 +489,64 @@ def _write_case_artifacts_calvin_debug(
             "",
             f"_官方 debug ``*.npz`` 向量 teacher + hybrid replanner；**非** leaderboard；来源 **`{tag}`**（batch=`{calvin_debug_batch}`）。_",
             "",
-            "### A) 最近似成功（LLM 校验修订）",
-            f"- [`{succ_f}`](../../results/demos/hybrid_replanner_cases/{succ_f})",
+            "### A) Semantic reject before execution",
+            f"- [`{reject_f}`](../../results/demos/hybrid_replanner_cases/{reject_f})",
+            (
+                f"- acceptance_rejection_reason=`{reject_audit.get('acceptance_rejection_reason')}`; "
+                f"details=`{reject_audit.get('acceptance_rejection_details')}`"
+                if reject_audit
+                else "- _本 batch 未命中 semantic acceptance reject 样例。_"
+            ),
+            (
+                f"- raw_generation_head=`{(reject_audit.get('raw_generation_head') or '')[:120]}`; "
+                f"parser_repair_actions=`{reject_audit.get('parser_repair_actions')}`"
+                if reject_audit
+                else ""
+            ),
             "",
-            "### B) Fallback（解析失败）",
+            "### B) 最近似成功（LLM 校验修订）",
+            f"- [`{succ_f}`](../../results/demos/hybrid_replanner_cases/{succ_f})",
+            (
+                f"- parser_repair_actions=`{succ_audit.get('parser_repair_actions')}`; "
+                f"raw_generation_head=`{(succ_audit.get('raw_generation_head') or '')[:120]}`"
+                if succ_audit
+                else "- _本 batch 未命中 LLM validated success 样例。_"
+            ),
+            (
+                f"- episode_failure_label=`{succ_summary.get('episode_failure_label')}`; "
+                f"terminal_failure_label=`{succ_summary.get('terminal_failure_label')}`; "
+                f"terminal_failure_type=`{succ_summary.get('terminal_failure_type')}`"
+                if succ_summary
+                else ""
+            ),
+            "",
+            "### C) Fallback（解析失败）",
             f"- [`{fb_f}`](../../results/demos/hybrid_replanner_cases/{fb_f})",
+            (
+                f"- parse_error_kind=`{fb_audit.get('replanner_parse_error_kind')}`; "
+                f"fallback_reason=`{fb_audit.get('fallback_reason')}`"
+                if fb_audit
+                else "- _本 batch 未命中 parse fallback 样例。_"
+            ),
+            (
+                f"- raw_generation_head=`{(fb_audit.get('raw_generation_head') or '')[:120]}`; "
+                f"parser_repair_actions=`{fb_audit.get('parser_repair_actions')}`"
+                if fb_audit
+                else ""
+            ),
+            "",
+            "### D) Refined failure counts",
+            "```json",
+            json.dumps(
+                {
+                    "acceptance_rejection_reason_counts": dict(acceptance_rejection_counts),
+                    "episode_failure_label_counts": dict(episode_failure_counts),
+                    "terminal_failure_label_counts": dict(terminal_failure_counts),
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            "```",
             "",
         ]
     )
@@ -474,6 +640,7 @@ def _write_case_artifacts(root: Path, traces: list[Any], eid: str) -> None:
                     "success": tr.success,
                     "replan_count": tr.replan_count,
                     "final_message": tr.final_message,
+                    **classify_hybrid_episode_failure(tr.steps, final_message=tr.final_message),
                 },
             }
         (demo / fname).write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -536,6 +703,12 @@ def _write_case_artifacts(root: Path, traces: list[Any], eid: str) -> None:
                 "## 2) Parse / 校验失败 → 规则回退",
                 f"- 文件：[`case_parse_fallback.json`](../../results/demos/hybrid_replanner_cases/case_parse_fallback.json)",
                 f"- {notes['parse']}",
+                (
+                    f"- observed parse_error_kind=`{((parse_fallback or (None, None, {}))[2].get('replan_audit') or {}).get('replanner_parse_error_kind')}` "
+                    f"fallback_reason=`{((parse_fallback or (None, None, {}))[2].get('replan_audit') or {}).get('fallback_reason')}`"
+                    if parse_fallback is not None
+                    else "- _n/a_"
+                ),
                 "",
                 "## 3) LLM 计划通过校验但后续 verification_replan 仍失败",
                 f"- 文件：[`case_validated_repair_failed.json`](../../results/demos/hybrid_replanner_cases/case_validated_repair_failed.json)",

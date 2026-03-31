@@ -1,6 +1,6 @@
 # Evidence consistency audit
 
-_Generated: `2026-03-27T14:22:34.111978+00:00` (partially automated)_
+_Generated: `2026-03-31T11:48:18.073187+00:00` (partially automated)_
 
 ## Automated checks
 
@@ -8,7 +8,7 @@ _All checked strongest artifact paths exist._
 
 ## README patch status
 
-- Skipped README patch (--skip-readme-patch).
+- README missing ESA_UNIFIED_HEADLINES markers — no auto-patch.
 
 ## Cross-check: dashboard vs JSON
 

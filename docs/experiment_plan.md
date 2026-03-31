@@ -25,7 +25,7 @@
 
 ## 3. 产出物
 
-- 每次正式跑：`experiment_id`、`config` 快照、`metrics.json`、可选 `summary.md`
+- 每次正式跑：`experiment_id`、`config.snapshot.json` / `config.snapshot.yaml`、`run_manifest.json`（训练沿用 `run_meta.json`）、`metrics.json`、可选 `summary.md`
 - 结果目录：`results/` 下按 benchmark / 日期分子文件夹（见 README）
 
 ## 4. TODO

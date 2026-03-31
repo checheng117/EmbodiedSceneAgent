@@ -25,14 +25,14 @@ Makes **grounding, legality, and failure recovery** inspectable via shared contr
     "note": "Not official CALVIN benchmark."
   },
   "hybrid_headline": {
-    "replan_parse_success_rate": 1.0,
-    "validated_revision_rate": 1.0,
-    "fallback_rate": 0.0,
+    "replan_parse_success_rate": 0.0,
+    "validated_revision_rate": 0.0,
+    "fallback_rate": 1.0,
     "repair_success_rate": 1.0,
-    "unknown_failure_rate": 0.6153846153846154,
-    "unknown_skill_rate": null,
-    "alias_normalization_count": null,
-    "invalid_skill_count": null
+    "unknown_failure_rate": 0.6,
+    "unknown_skill_rate": 0.0,
+    "alias_normalization_count": 0,
+    "invalid_skill_count": 0
   },
   "rlbench_stage": "import_fail"
 }
