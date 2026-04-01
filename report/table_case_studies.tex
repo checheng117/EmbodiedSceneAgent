@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\caption{Side-by-side representative cases from the fixed tiny 3-case comparison. All three tracks are parse-valid and schema-validated; differences mainly appear at semantic acceptance.}
+\label{tab:case-studies}
+\centering
+\begin{tabular}{p{0.17\textwidth}p{0.12\textwidth}p{0.20\textwidth}p{0.21\textwidth}p{0.19\textwidth}}
+\toprule
+Case & Episode ID & Revised-plan evidence (shortened) & Acceptance / status & One-sentence takeaway \\
+\midrule
+Baseline rejection case &
+\texttt{episode\_0358502.npz} &
+\texttt{subgoal: place\_...\_drawer; target: table; skill: place} &
+parse=3/3, validated=3/3, rejected (\texttt{drawer\_goal\_target\_mismatch}), terminal label dominated by \texttt{repeated\_no\_effect\_fallback\_exhausted} &
+The baseline failure is not format collapse; it is a schema-valid but semantically inconsistent revision. \\
+\midrule
+VL-3B accepted case &
+\texttt{episode\_0358522.npz} &
+\texttt{subgoal: grasp...; target: red\_block; skill: grasp} &
+parse=3/3, validated=3/3, accepted (3/3 in run), terminal label still dominated by \texttt{repeated\_no\_effect\_fallback\_exhausted} &
+VL-3B is strongest on this tiny set because its revised plans consistently pass semantic acceptance. \\
+\midrule
+VL-7B partial degradation case &
+\texttt{episode\_0358502.npz} &
+\texttt{subgoal: grasp\_blue\_...; target: blue\_block; skill: grasp} &
+parse=3/3, validated=3/3, partially accepted (2/3), one semantic rejection (\texttt{target\_absent\_from\_scene\_memory}), terminal label dominated by \texttt{repeated\_no\_effect\_fallback\_exhausted} &
+VL-7B runs successfully but does not outperform VL-3B in this controlled tiny comparison. \\
+\bottomrule
+\end{tabular}
+\end{table*}

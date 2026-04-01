@@ -1,0 +1,224 @@
+\documentclass{article}
+
+\usepackage[final]{Styles/neurips_2025}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\title{Assignment 3 Report: Agent-Oriented LLM Post-Training for Structured Replanning in EmbodiedSceneAgent}
+
+\author{
+Che CHENG \\
+Student ID: 225015050 \\
+Course: CSC5051: Natural Language Processing
+}
+
+\makeatletter
+\renewcommand{\@noticestring}{}
+\makeatother
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report presents EmbodiedSceneAgent as an Assignment 3 study on agent-oriented LLM post-training for structured replanning with scene-memory grounding, verifier feedback, and failure-aware recovery. The work focuses on a cognition-layer closed loop rather than end-to-end low-level control. The primary quantitative evidence is a directly comparable base-vs-tuned evaluation on structured planner outputs ($n=73$), where the tuned path improves tool-use accuracy, target-match rate, and strict task proxy while maintaining perfect format compliance. A secondary fixed tiny 3-case qualitative comparison under matched settings shows accepted revised plans of $0/3$ (stable baseline), $3/3$ (Qwen2.5-VL-3B), and $2/3$ (Qwen2.5-VL-7B). The report emphasizes conservative interpretation, explicit evidence hierarchy, and current limitations.
+\end{abstract}
+
+\section{Introduction and Research Topic}
+This project studies language-conditioned embodied high-level planning, where a model must propose and revise executable subtasks under changing scene state. The downstream task is not generic text generation; it is structured decision-making in a closed cognition loop.
+
+The work is an LLM post-training task because model outputs are constrained to a fixed planner schema, and performance is evaluated by comparing a stable baseline against a tuned model under the same contract. It is agent-oriented because planning is embedded inside local executable components: observation processing, scene memory, verifier checks, and replanning.
+
+The main problem addressed is failure recovery after initial planning errors, especially grounding mismatch and repeated no-effect behavior. The practical target is to make recovery auditable and improve structured decision quality without overstating benchmark claims.
+
+\section{Task Formulation}
+\textbf{Input.} Natural-language instruction, current observation-derived scene state, and recent action/history context.
+
+\textbf{Intermediate state.} Structured \texttt{SceneMemory} used as a grounded object-level representation.
+
+\textbf{Planner output schema.} \texttt{PlannerOutput} fields:
+\texttt{task}, \texttt{subgoal}, \texttt{target\_object}, \texttt{skill}, \texttt{success\_check}, \texttt{fallback}, with optional \texttt{reasoning} and \texttt{confidence}.
+
+\textbf{Verifier and replanner role.} The verifier compares before/after state to classify failure types; the replanner then performs rule or hybrid rule+LLM revision with audit traces.
+
+\textbf{Success/failure definition.} Success means the episode reaches objective completion under loop policy. Failure means effective progress cannot be achieved before termination.
+
+\section{Experiment Design}
+\subsection{Model Selection and Comparison Setup}
+Base model path in this report: stable baseline planner path used for the main quantitative comparison and tiny qualitative baseline anchor.
+
+Tuned model path in this report: \texttt{Qwen2.5-VL-3B-Instruct} with minimal LoRA SFT.
+
+The tuning artifact is recorded in \texttt{results/checkpoints/planner\_sft\_3b\_minimal/run\_latest/}, with model/training metadata in \texttt{run\_meta.json} and setup snapshot in \texttt{config.snapshot.yaml}. Reported metadata includes \texttt{model\_id=Qwen/Qwen2.5-VL-3B-Instruct}, \texttt{max\_optimizer\_steps=80}, and \texttt{best\_val\_loss=0.4959}.
+
+\subsection{3090-Only Development Strategy}
+The current development path uses a constrained setup suitable for RTX 3090:
+\begin{itemize}[leftmargin=*]
+  \item Minimal LoRA SFT configuration uses bf16 precision with compact low-rank adaptation (\texttt{r=8}, \texttt{alpha=16}, \texttt{dropout=0.05} on \texttt{q\_proj}/\texttt{v\_proj}).
+  \item Short-step, small-batch training is explicitly configured (\texttt{max\_steps=80}, \texttt{per\_device\_batch\_size=1}, \texttt{gradient\_accumulation\_steps=4}).
+  \item Real checkpoint, run metadata, and config snapshot are versioned as reproducibility artifacts.
+  \item No claim is made that this is a large-scale final training regime.
+\end{itemize}
+
+\subsection{Data and Supervision Construction}
+Training sample shape (report shorthand):
+\begin{itemize}[leftmargin=*]
+  \item input = instruction + scene memory + history + failure evidence
+  \item target = structured revised plan JSON
+\end{itemize}
+The repository uses structured planner supervision and failure-aware examples rather than unconstrained QA-style text targets. In practical terms, supervision is aligned to the fixed planner contract (\texttt{task, subgoal, target\_object, skill, success\_check, fallback}), so the training/evaluation objective is schema-consistent decision quality instead of free-form fluency.
+
+\subsection{Structured Output and Prompt Contract}
+The planner/replanner path enforces a strict key contract and canonical skill vocabulary. Runtime includes parse, repair, validation, and fallback logic; only schema-valid and semantically accepted revised plans are executed.
+
+\subsection{Evaluation Protocol and Evidence Hierarchy}
+\textbf{Primary quantitative evidence:} base-vs-tuned metrics from \texttt{results/eval/planner\_base\_vs\_tuned/metrics.json} with $n=73$.
+
+\textbf{Secondary qualitative evidence:} fixed tiny 3-case side-by-side comparison under matched settings (\texttt{backend=calvin\_debug\_real}, \texttt{batch=grouped\_sequence}, \texttt{episodes=3}, \texttt{seed=42}, \texttt{verifier\_mode=verifier\_plus\_replan}, \texttt{replanner\_mode=hybrid}).
+
+\textbf{Engineering evidence:} config snapshots, run manifests, failure taxonomies, and audit fields from generated artifacts.
+
+\section{Code and System Implementation}
+\subsection{Closed-Loop Architecture}
+The implemented cognition loop is:
+\begin{center}
+\texttt{Observation -> Scene Memory -> Planner -> Executor -> Verifier -> Replanner}
+\end{center}
+
+\subsection{Tool-Like Components}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Scene memory interface}: provides grounded object ids and state fields.
+  \item \textbf{Planner contract}: enforces structured output for downstream routing.
+  \item \textbf{Verifier}: maps execution outcomes to explicit failure evidence.
+  \item \textbf{Hybrid replanner}: combines rule-first repair with optional LLM fallback.
+\end{itemize}
+
+\subsection{Parser, Repair, and Validation}
+Replanning uses a constrained JSON pipeline: extraction/recovery, key sanitization, contract validation, and parse-error labeling. Invalid outputs fall back to safer rule behavior with explicit audit reasons.
+
+\subsection{Semantic Acceptance Filter}
+Before executing an LLM-revised plan, the system rejects schema-valid but semantically inconsistent plans (for example, target absent from scene memory or drawer-goal target mismatch). This separates format correctness from grounding correctness.
+
+\subsection{Repeated-No-Effect Guard}
+The loop records consecutive no-effect signatures and can stop repeated ineffective fallback attempts early, producing explicit terminal labels for diagnosis.
+
+\subsection{Reproducibility Artifacts}
+Run directories include config snapshots and run manifests. This enables traceable experiment provenance without introducing unverified claims.
+
+\section{Experimental Results}
+\subsection{Main Quantitative Comparison}
+Table~\ref{tab:main-quant} reports the direct base-vs-tuned comparison from the current repository artifacts.
+\input{table_main_quant.tex}
+
+This table is the primary quantitative evidence in this report because it is directly comparable under one fixed evaluator and one fixed planner-output contract ($n=73$), without mixing different backends or run protocols. Metric meanings are:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Format compliance}: whether planner outputs satisfy the required structured format.
+  \item \textbf{Tool-use accuracy}: whether the selected skill aligns with reference targets in the proxy evaluation.
+  \item \textbf{Target-match rate}: whether the chosen action-target grounding matches reference targets.
+  \item \textbf{Strict task proxy}: conjunction-style proxy requiring format correctness, skill match, and target match together.
+\end{itemize}
+
+The tuned path improves all three quality-sensitive proxy dimensions while keeping format compliance fixed at 1.000. This matters because the gain is not achieved by relaxing structure; it reflects better structured decision content under the same output contract.
+
+These proxy metrics are not a substitute for full environment-level success rates. However, for the present Assignment 3 scope they remain meaningful because they quantify structured planner-output quality under strict, directly comparable conditions: same schema, same parsing/validation contract, and same scoring logic across base and tuned paths.
+
+\subsection{What Improved vs.\ What Did Not Improve in the Main Table}
+What improved:
+\begin{itemize}[leftmargin=*]
+  \item Tool-use accuracy improves from 0.082 to 0.219.
+  \item Target-match rate improves from 0.329 to 0.479.
+  \item Strict task proxy improves from 0.068 to 0.205.
+\end{itemize}
+
+What did not change:
+\begin{itemize}[leftmargin=*]
+  \item Format compliance remains 1.000 in both tracks.
+\end{itemize}
+
+Hence, the quantitative result should be interpreted as a quality improvement in structured planner outputs, not as a claim of official environment-level benchmark gains.
+
+\subsection{Tiny 3-Case Qualitative Comparison}
+Table~\ref{tab:tiny-qual} reports fixed tiny side-by-side runs under matched settings.
+\input{table_tiny_qual.tex}
+
+Required summary (exact):
+\begin{itemize}[leftmargin=*]
+  \item stable baseline accepted revised plans = \textbf{0/3}
+  \item VL-3B = \textbf{3/3}
+  \item VL-7B = \textbf{2/3}
+\end{itemize}
+
+This table is secondary qualitative evidence rather than primary quantitative evidence. Its value is controlled diagnosis: all three tracks run under matched settings, so differences can be attributed to revised-plan semantic acceptance behavior rather than setup drift.
+
+Within this controlled setting, all tracks remain parse-stable and validation-stable (3/3), so the key separation is semantic acceptance rather than JSON formatting. VL-3B is currently the strongest secondary qualitative comparison track in this fixed set. VL-7B is runnable but does not outperform VL-3B on this tiny comparison.
+
+The limitation is scale: a fixed 3-case set is not statistically significant and should not be interpreted as benchmark ranking. The strength is diagnostic resolution: it reveals concrete grounding and rejection patterns (\texttt{target\_absent\_from\_scene\_memory}, \texttt{drawer\_goal\_target\_mismatch}) under identical conditions.
+
+\subsection{Short Case-Study Subsection}
+\input{table_case_studies.tex}
+
+\textbf{Case 1: baseline bad-plan semantic rejection.}
+The representative baseline episode (\texttt{episode\_0358502.npz}) shows a revised plan whose text indicates drawer intent but grounds the target to \texttt{table}. Parse and schema validation succeed, yet semantic acceptance rejects the revision with \texttt{drawer\_goal\_target\_mismatch}. This is evidence of semantic inconsistency rather than output-format failure.
+
+\textbf{Case 2: VL-3B accepted revision.}
+The representative VL-3B episode (\texttt{episode\_0358522.npz}) produces a grounded revision accepted by the semantic gate. At run level, VL-3B reaches 3/3 accepted revised plans under the same fixed setup. The remaining terminal issue is still dominated by repeated no-effect behavior, indicating downstream execution pressure after acceptance.
+
+\textbf{Case 3: VL-7B partial degradation.}
+The representative VL-7B episode (\texttt{episode\_0358502.npz}) includes one rejected revision due to \texttt{target\_absent\_from\_scene\_memory}. Run-level acceptance is 2/3, so VL-7B is operational but not stronger than VL-3B in this tiny controlled comparison.
+
+All case descriptions are repository-backed from \texttt{docs/failure\_cases/hybrid\_replanner\_cases.md} and run metrics in the three fixed tiny run directories.
+
+\section{Analysis and Discussion}
+\subsection{Why the Tuned Path Helps}
+The tuned path improves structured planner-output quality on the primary base-vs-tuned table, especially in tool-use accuracy, target-match rate, and the strict conjunction proxy. These gains suggest that minimal LoRA post-training improves action-target consistency under the existing schema constraints.
+
+The unchanged format compliance at 1.000 is also important: it shows that the improvements are not explained by easier formatting behavior or loosened validation thresholds. Instead, the change appears in content quality dimensions while structural discipline is preserved.
+
+\subsection{How to Interpret Tiny Qualitative Evidence}
+The tiny 3-case comparison is useful because it isolates semantic acceptance behavior under one controlled setup and fixed run protocol. In this setting, all tracks are equally stable at parse/validate (3/3), so differences emerge at semantic acceptance:
+\begin{itemize}[leftmargin=*]
+  \item baseline: 0/3 accepted revised plans,
+  \item VL-3B: 3/3 accepted revised plans,
+  \item VL-7B: 2/3 accepted revised plans.
+\end{itemize}
+
+This pattern explains why VL-3B is currently the strongest secondary qualitative track and why VL-7B should be reported as runnable but not superior on this tiny set.
+
+At the same time, tiny qualitative evidence remains diagnostic rather than statistically conclusive. The report therefore uses it to explain behavioral differences, not to claim broad generalization.
+
+In other words, Table~\ref{tab:tiny-qual} should be read as a controlled stress test of semantic grounding quality, not as a scaled performance benchmark.
+
+\subsection{Current Bottleneck and System Maturity}
+The current failure profile is increasingly concentrated in execution-side no-effect outcomes, especially the terminal label \texttt{repeated\_no\_effect\_fallback\_exhausted}. This indicates a maturity shift: earlier failure pressure from semantically poor revisions is reduced in stronger tracks, while remaining difficulty is in turning semantically acceptable plans into effective state change.
+
+From a course-assignment perspective, this is a meaningful intermediate maturity stage: structured output quality and semantic gating are functioning, but robust execution effectiveness remains an open engineering and evaluation challenge.
+
+\section{Limitations}
+\begin{itemize}[leftmargin=*]
+  \item The tiny 3-case comparison is diagnostic only, not statistically significant benchmarking.
+  \item VL-3B is a secondary qualitative track, not a replacement of the stable baseline narrative.
+  \item VL-7B is not claimed to be better than VL-3B.
+  \item No official CALVIN or RLBench leaderboard claim is made.
+  \item Remaining failures are still execution-side/no-effect heavy.
+  \item RLBench full simulator pipeline is currently blocked in this machine snapshot; fixture bridge evidence is used for cognition-layer smoke only.
+\end{itemize}
+
+\section{Conclusion}
+This Assignment 3 study demonstrates an implemented agent-oriented post-training setting with structured replanning, explicit verifier feedback, and auditable recovery behavior. The strongest quantitative evidence is the base-vs-tuned proxy improvement under matched schema constraints. The tiny fixed qualitative comparison adds controlled diagnostic evidence: baseline 0/3 accepted revisions, VL-3B 3/3, VL-7B 2/3. Current scope remains conservative: useful progress in structured grounding and recovery diagnostics, with substantial remaining execution-side no-effect limitations.
+
+\section*{Repository Evidence Paths (Appendix-Style)}
+\small
+This report is grounded in repository artifacts rather than an external bibliography. Load-bearing evidence paths are grouped as:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Main quantitative evidence:} \texttt{results/eval/planner\_base\_vs\_tuned/metrics.json}; \texttt{docs/final\_report\_assets/tables/current\_main\_results\_table.md}.
+  \item \textbf{Tiny qualitative and cases:} \texttt{docs/final\_report\_assets/case\_studies/tiny\_3case\_qualitative\_summary.md}; \texttt{docs/failure\_cases/hybrid\_replanner\_cases.md}.
+  \item \textbf{Project snapshot and status:} \texttt{results/reports/latest\_project\_report.json}; \texttt{results/reports/latest\_project\_dashboard.md}.
+\end{itemize}
+
+\end{document}
