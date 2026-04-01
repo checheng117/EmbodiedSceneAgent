@@ -30,6 +30,8 @@ venv/
 *.swp
 *~
 .DS_Store
+*.tmp
+*.temp
 
 # --- Upstream CALVIN trees + datasets (clone locally; never commit)
 data/raw/**
@@ -47,6 +49,8 @@ data/processed/**/*.jsonl
 /results/logs/
 /results/calvin_live_probe_summary.json
 /results/v0_mock_summary.json
+/results/showcase/*
+!/results/showcase/.gitkeep
 
 # Under eval/: only keep small proxy metrics text (optional for GitHub narrative)
 /results/eval/*
@@ -63,3 +67,9 @@ data/processed/**/*.jsonl
 !/results/final_report_assets/**
 !/results/rlbench_dev_smoke.json
 !/results/rlbench_stack_diagnosis.json
+
+# --- LaTeX build byproducts (report/archive)
+*.aux
+*.out
+*.log
+*.toc

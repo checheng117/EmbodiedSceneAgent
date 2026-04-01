@@ -1,0 +1,12 @@
+{
+  "instruction": "Put the red block in the drawer.",
+  "notes": "Minimal showcase prompt used by scripts/showcase_smoke.sh",
+  "loop": [
+    "Observation",
+    "Scene Memory",
+    "Planner",
+    "Executor",
+    "Verifier",
+    "Replanner"
+  ]
+}
