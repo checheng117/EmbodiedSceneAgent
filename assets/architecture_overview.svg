@@ -1,60 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="430" viewBox="0 0 1400 430">
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="520" viewBox="0 0 1360 520">
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-      <path d="M0,0 L10,3 L0,6 Z" fill="#374151"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fbff"/>
+      <stop offset="100%" stop-color="#eef4ff"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#334155"/>
     </marker>
     <style>
-      .box { fill: #f8fafc; stroke: #334155; stroke-width: 2; rx: 12; ry: 12; }
-      .guard { fill: #fff7ed; stroke: #c2410c; stroke-width: 2; rx: 12; ry: 12; }
-      .model { fill: #ecfeff; stroke: #0e7490; stroke-width: 2; rx: 12; ry: 12; }
-      .t { font-family: Arial, sans-serif; font-size: 18px; fill: #0f172a; }
-      .s { font-family: Arial, sans-serif; font-size: 14px; fill: #334155; }
-      .link { stroke: #374151; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
-      .dashed { stroke-dasharray: 8 6; }
+      .title { font-family: Arial, sans-serif; font-size: 28px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 15px; fill: #475569; }
+      .node { fill: #ffffff; stroke: #334155; stroke-width: 2; rx: 14; ry: 14; }
+      .nodeText { font-family: Arial, sans-serif; font-size: 18px; font-weight: 600; fill: #0f172a; }
+      .accentNode { fill: #fff7ed; stroke: #c2410c; stroke-width: 2.5; rx: 14; ry: 14; }
+      .accentText { font-family: Arial, sans-serif; font-size: 16px; font-weight: 700; fill: #9a3412; }
+      .tunedNode { fill: #ecfeff; stroke: #0e7490; stroke-width: 2.5; rx: 14; ry: 14; }
+      .tunedText { font-family: Arial, sans-serif; font-size: 16px; font-weight: 700; fill: #155e75; }
+      .arrow { stroke: #334155; stroke-width: 2.8; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 9 7; }
+      .label { font-family: Arial, sans-serif; font-size: 13px; fill: #475569; }
     </style>
   </defs>
 
-  <rect class="box" x="30" y="70" width="170" height="58"/>
-  <text class="t" x="115" y="106" text-anchor="middle">Observation</text>
+  <rect x="0" y="0" width="1360" height="520" fill="url(#bg)"/>
 
-  <rect class="box" x="235" y="70" width="190" height="58"/>
-  <text class="t" x="330" y="106" text-anchor="middle">Scene Memory</text>
+  <text class="title" x="40" y="56">EmbodiedSceneAgent Architecture</text>
+  <text class="subtitle" x="40" y="84">Closed cognition loop with semantic filtering, no-effect guard, and tuned model path</text>
 
-  <rect class="box" x="460" y="70" width="150" height="58"/>
-  <text class="t" x="535" y="106" text-anchor="middle">Planner</text>
+  <rect class="node" x="40" y="150" width="170" height="68"/>
+  <text class="nodeText" x="125" y="193" text-anchor="middle">Observation</text>
 
-  <rect class="box" x="645" y="70" width="150" height="58"/>
-  <text class="t" x="720" y="106" text-anchor="middle">Executor</text>
+  <rect class="node" x="245" y="150" width="190" height="68"/>
+  <text class="nodeText" x="340" y="193" text-anchor="middle">Scene Memory</text>
 
-  <rect class="box" x="830" y="70" width="150" height="58"/>
-  <text class="t" x="905" y="106" text-anchor="middle">Verifier</text>
+  <rect class="node" x="470" y="150" width="150" height="68"/>
+  <text class="nodeText" x="545" y="193" text-anchor="middle">Planner</text>
 
-  <rect class="box" x="1015" y="70" width="160" height="58"/>
-  <text class="t" x="1095" y="106" text-anchor="middle">Replanner</text>
+  <rect class="node" x="655" y="150" width="150" height="68"/>
+  <text class="nodeText" x="730" y="193" text-anchor="middle">Executor</text>
 
-  <rect class="guard" x="1010" y="190" width="230" height="62"/>
-  <text class="t" x="1125" y="224" text-anchor="middle">Semantic Acceptance Filter</text>
+  <rect class="node" x="840" y="150" width="150" height="68"/>
+  <text class="nodeText" x="915" y="193" text-anchor="middle">Verifier</text>
 
-  <rect class="guard" x="785" y="300" width="230" height="62"/>
-  <text class="t" x="900" y="334" text-anchor="middle">Repeated-No-Effect Guard</text>
+  <rect class="node" x="1025" y="150" width="170" height="68"/>
+  <text class="nodeText" x="1110" y="193" text-anchor="middle">Replanner</text>
 
-  <rect class="model" x="455" y="300" width="260" height="62"/>
-  <text class="t" x="585" y="334" text-anchor="middle">Tuned Model Path (Qwen2.5-VL-3B)</text>
+  <rect class="accentNode" x="980" y="280" width="300" height="74"/>
+  <text class="accentText" x="1130" y="324" text-anchor="middle">Semantic Acceptance Filter</text>
 
-  <path class="link" d="M200 99 H235"/>
-  <path class="link" d="M425 99 H460"/>
-  <path class="link" d="M610 99 H645"/>
-  <path class="link" d="M795 99 H830"/>
-  <path class="link" d="M980 99 H1015"/>
+  <rect class="accentNode" x="780" y="400" width="320" height="74"/>
+  <text class="accentText" x="940" y="444" text-anchor="middle">Repeated-No-Effect Guard</text>
 
-  <path class="link" d="M1095 128 V190"/>
-  <path class="link" d="M1010 221 H795 V128"/>
-  <path class="link dashed" d="M905 128 V300"/>
-  <path class="link" d="M900 300 V252 H1010"/>
+  <rect class="tunedNode" x="430" y="400" width="300" height="74"/>
+  <text class="tunedText" x="580" y="430" text-anchor="middle">Tuned Model Path</text>
+  <text class="tunedText" x="580" y="454" text-anchor="middle">Qwen2.5-VL-3B (LoRA)</text>
 
-  <path class="link dashed" d="M585 300 V128"/>
-  <path class="link dashed" d="M715 331 H1015"/>
+  <path class="arrow" d="M210 184 H245"/>
+  <path class="arrow" d="M435 184 H470"/>
+  <path class="arrow" d="M620 184 H655"/>
+  <path class="arrow" d="M805 184 H840"/>
+  <path class="arrow" d="M990 184 H1025"/>
 
-  <text class="s" x="40" y="30">EmbodiedSceneAgent closed loop:</text>
-  <text class="s" x="260" y="30">Observation ’ Scene Memory ’ Planner ’ Executor ’ Verifier ’ Replanner</text>
+  <path class="arrow" d="M1110 218 V280"/>
+  <path class="arrow" d="M980 317 H730 V218"/>
+  <text class="label" x="832" y="265">accepted revised plan to execution</text>
+
+  <path class="arrow dashed" d="M915 218 V400"/>
+  <path class="arrow" d="M940 400 V354 H980"/>
+  <text class="label" x="955" y="386">repeated no-effect escalation</text>
+
+  <path class="arrow dashed" d="M580 400 V218"/>
+  <path class="arrow dashed" d="M730 437 H780"/>
+  <text class="label" x="610" y="374">tuned model drives planner/replanner proposals</text>
+
+  <text class="subtitle" x="40" y="504">Core chain: Observation -&gt; Scene Memory -&gt; Planner -&gt; Executor -&gt; Verifier -&gt; Replanner</text>
 </svg>

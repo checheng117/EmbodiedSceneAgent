@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="760" viewBox="0 0 1360 760">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 52px; font-weight: 700; fill: #f8fafc; }
+      .sub { font-family: Arial, sans-serif; font-size: 24px; fill: #cbd5e1; }
+      .chip { fill: #111827; stroke: #334155; stroke-width: 1.8; rx: 10; ry: 10; }
+      .chipText { font-family: Arial, sans-serif; font-size: 20px; font-weight: 600; fill: #e2e8f0; }
+      .card { fill: #0b1220; stroke: #475569; stroke-width: 2; rx: 14; ry: 14; }
+      .metric { font-family: Arial, sans-serif; font-size: 34px; font-weight: 700; fill: #f8fafc; }
+      .label { font-family: Arial, sans-serif; font-size: 18px; fill: #94a3b8; }
+      .note { font-family: Arial, sans-serif; font-size: 18px; fill: #cbd5e1; }
+      .foot { font-family: Arial, sans-serif; font-size: 15px; fill: #94a3b8; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1360" height="760" fill="url(#bg)"/>
+
+  <text class="title" x="70" y="110">EmbodiedSceneAgent</text>
+  <text class="sub" x="70" y="152">Closed-loop planning showcase snapshot (static teaser)</text>
+
+  <rect class="chip" x="70" y="190" width="560" height="58"/>
+  <text class="chipText" x="95" y="227">Observation -> Scene Memory -> Planner -> Executor -> Verifier -> Replanner</text>
+
+  <rect class="card" x="70" y="290" width="390" height="190"/>
+  <text class="metric" x="105" y="362">0.068 -> 0.205</text>
+  <text class="label" x="105" y="400">strict task proxy (base -> tuned, n=73)</text>
+  <text class="label" x="105" y="430">source: results/eval/planner_base_vs_tuned/metrics.json</text>
+
+  <rect class="card" x="490" y="290" width="390" height="190"/>
+  <text class="metric" x="525" y="362">0/3  3/3  2/3</text>
+  <text class="label" x="525" y="400">accepted revised plans (baseline / VL-3B / VL-7B)</text>
+  <text class="label" x="525" y="430">same backend, batch, seed, and fixed episodes</text>
+
+  <rect class="card" x="910" y="290" width="380" height="190"/>
+  <text class="metric" x="945" y="362">Semantic Gate + Guard</text>
+  <text class="label" x="945" y="400">semantic acceptance filter blocks bad grounding</text>
+  <text class="label" x="945" y="430">repeated-no-effect guard writes terminal evidence</text>
+
+  <text class="note" x="70" y="560">This is a static public teaser placeholder (no fabricated motion demo).</text>
+  <text class="note" x="70" y="592">Current media focus: transparent evidence, controlled comparisons, and failure analysis.</text>
+
+  <text class="foot" x="70" y="710">Asset: assets/teaser_placeholder.svg</text>
+</svg>
