@@ -17,12 +17,9 @@ EmbodiedSceneAgent is a research codebase for embodied-task replanning under cha
 |  | VL-7B accepted revised plans `2/3` |
 | Scope boundary | proxy metrics are not official environment success rates; tiny set is diagnostic only |
 
-## Teaser / Quick Showcase
+## Quick Showcase
 
 ![EmbodiedSceneAgent Teaser Snapshot](assets/teaser_placeholder.svg)
-
-Static public teaser snapshot (placeholder).  
-It provides a compact view of the current closed-loop pipeline and result highlights, without implying an animated demo.
 
 ## Why this matters
 
@@ -98,11 +95,6 @@ Expected outputs:
 - Tiny 3-case findings are useful for diagnosis, but not enough to support broad generalization claims.
 - Terminal failures are still frequently dominated by repeated no-effect execution dynamics.
 
-## Short roadmap
-
-- Expand controlled evaluations beyond tiny case counts while keeping strict evidence boundaries.
-- Improve execution-side recovery after semantically valid replans.
-- Add richer public-facing visual assets (for example short teaser media) while keeping evidence auditable.
 
 ## Public docs
 
